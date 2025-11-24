@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Alert, Button, StyleSheet, Text, TextInput, View } from "react-native";
 import { loginUser } from "../services/api";
 
-export default function LoginScreen() {
+export default function LoginScreen({ navigation }: any) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -51,6 +51,22 @@ export default function LoginScreen() {
       />
 
       <Button title="Log In" onPress={handleLogin} />
+
+      <View style={styles.skipSection}>
+        <Text style={styles.skipTitle}>Quick Navigation (Dev)</Text>
+        <View style={styles.skipButton}>
+          <Button title="→ Home" onPress={() => navigation.navigate("HomeScreen")} />
+        </View>
+        <View style={styles.skipButton}>
+          <Button title="→ Workout" onPress={() => navigation.navigate("WorkoutScreen")} />
+        </View>
+        <View style={styles.skipButton}>
+          <Button title="→ Calories" onPress={() => navigation.navigate("CalorieScreen")} />
+        </View>
+        <View style={styles.skipButton}>
+          <Button title="→ Account" onPress={() => navigation.navigate("AccountScreen")} />
+        </View>
+      </View>
     </View>
   );
 }
@@ -75,5 +91,20 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     marginBottom: 12,
     fontSize: 16,
+  },
+  skipSection: {
+    marginTop: 40,
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: "#ddd",
+  },
+  skipTitle: {
+    fontSize: 14,
+    color: "#999",
+    textAlign: "center",
+    marginBottom: 12,
+  },
+  skipButton: {
+    marginBottom: 8,
   },
 });
