@@ -5,8 +5,6 @@ export default function WorkoutScreen({ navigation }: any) {
     <View style={styles.container}>
       <Text style={styles.title}>Workout Screen</Text>
       <Text style={styles.subtitle}>Ready to start your workout?</Text>
-      
-      
     </View>
   );
 }
