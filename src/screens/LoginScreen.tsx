@@ -15,13 +15,15 @@ export default function LoginScreen({ navigation }: any) {
     const response = await loginUser(email, password);
 
     if (response.status === "success") {
+      const userId = response.user.id;
       Alert.alert(
         "Welcome!",
-        `Logged in as ${response.user.first_name} ${response.user.last_name}`
+        `Logged in as ${response.user.first_name} ${response.user.last_name} (ID: ${userId})`
       );
 
       console.log("User data:", response.user);
-
+      
+      navigation.navigate("WorkoutScreen", { userId: userId });
       // TODO: navigate to homepage
       // navigation.navigate("Home", { user: response.user });
     } else {
@@ -57,9 +59,9 @@ export default function LoginScreen({ navigation }: any) {
         <View style={styles.skipButton}>
           <Button title="→ Home" onPress={() => navigation.navigate("HomeScreen")} />
         </View>
-        <View style={styles.skipButton}>
-          <Button title="→ Workout" onPress={() => navigation.navigate("WorkoutScreen")} />
-        </View>
+        {/* <View style={styles.skipButton}>
+          <Button title="→ Workout" onPress={() => navigation.navigate("WorkoutScreen", { userId: 1 })} />
+        </View> */}
         <View style={styles.skipButton}>
           <Button title="→ Calories" onPress={() => navigation.navigate("CalorieScreen")} />
         </View>

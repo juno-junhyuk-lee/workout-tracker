@@ -27,17 +27,27 @@ function ScreenWrapper({ children, showFooter }: ScreenWrapperProps) {
   );
 }
 
-const HomeScreenWithFooter = () => (
-  <ScreenWrapper showFooter={true}><HomeScreen /></ScreenWrapper>
+const WorkoutScreenWithFooter = ({ route, navigation }: any) => (
+  <ScreenWrapper showFooter={true}>
+    <WorkoutScreen route={route} navigation={navigation} />
+  </ScreenWrapper>
 );
-const WorkoutScreenWithFooter = () => (
-  <ScreenWrapper showFooter={true}><WorkoutScreen /></ScreenWrapper>
+const HomeScreenWithFooter = ({ route, navigation }: any) => (
+  <ScreenWrapper showFooter={true}>
+    <HomeScreen route={route} navigation={navigation} />
+  </ScreenWrapper>
 );
-const CalorieScreenWithFooter = () => (
-  <ScreenWrapper showFooter={true}><CalorieScreen /></ScreenWrapper>
+
+const CalorieScreenWithFooter = ({ route, navigation }: any) => (
+  <ScreenWrapper showFooter={true}>
+    <CalorieScreen route={route} navigation={navigation} />
+  </ScreenWrapper>
 );
-const AccountScreenWithFooter = () => (
-  <ScreenWrapper showFooter={true}><AccountScreen /></ScreenWrapper>
+
+const AccountScreenWithFooter = ({ route, navigation }: any) => (
+  <ScreenWrapper showFooter={true}>
+    <AccountScreen route={route} navigation={navigation} />
+  </ScreenWrapper>
 );
 
 export default function App() {
