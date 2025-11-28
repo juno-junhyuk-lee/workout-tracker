@@ -171,7 +171,10 @@ git push origin feature/login
 Create a Pull Request on GitHub.
 
 
-UPDATE FOR WORKOUT FUNCTIONALITY:
+===================================
+
+
+# UPDATE FOR WORKOUT FUNCTIONALITY:
 Database Setup
 Required SQL Modifications
 Before running the application, you must execute the following SQL commands to enable AUTO_INCREMENT on primary keys:
