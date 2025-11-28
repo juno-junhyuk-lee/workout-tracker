@@ -1,8 +1,7 @@
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { View, StyleSheet } from 'react-native';
-import LoginScreen from "./src/screens/LoginScreen";
-import SignupScreen from "./src/screens/SignupScreen";
+import { NavigationContainer } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { View, StyleSheet } from "react-native";
+import AuthScreen from "./src/screens/AuthScreen";
 import WorkoutScreen from "./src/screens/WorkoutScreen";
 import HomeScreen from "./src/screens/HomeScreen";
 import CalorieScreen from "./src/screens/CalorieScreen";
@@ -19,37 +18,52 @@ interface ScreenWrapperProps {
 function ScreenWrapper({ children, showFooter }: ScreenWrapperProps) {
   return (
     <View style={styles.container}>
-      <View style={styles.content}>
-        {children}
-      </View>
+      <View style={styles.content}>{children}</View>
       {showFooter && <FooterNavigation />}
     </View>
   );
 }
 
 const HomeScreenWithFooter = () => (
-  <ScreenWrapper showFooter={true}><HomeScreen /></ScreenWrapper>
+  <ScreenWrapper showFooter={true}>
+    <HomeScreen />
+  </ScreenWrapper>
 );
 const WorkoutScreenWithFooter = () => (
-  <ScreenWrapper showFooter={true}><WorkoutScreen /></ScreenWrapper>
+  <ScreenWrapper showFooter={true}>
+    <WorkoutScreen />
+  </ScreenWrapper>
 );
 const CalorieScreenWithFooter = () => (
-  <ScreenWrapper showFooter={true}><CalorieScreen /></ScreenWrapper>
+  <ScreenWrapper showFooter={true}>
+    <CalorieScreen />
+  </ScreenWrapper>
 );
 const AccountScreenWithFooter = () => (
-  <ScreenWrapper showFooter={true}><AccountScreen /></ScreenWrapper>
+  <ScreenWrapper showFooter={true}>
+    <AccountScreen />
+  </ScreenWrapper>
 );
 
 export default function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="LoginScreen" component={LoginScreen} />
-        <Stack.Screen name="SignupScreen" component={SignupScreen} />
+        <Stack.Screen name="AuthScreen" component={AuthScreen} />
+
         <Stack.Screen name="HomeScreen" component={HomeScreenWithFooter} />
-        <Stack.Screen name="WorkoutScreen" component={WorkoutScreenWithFooter} />
-        <Stack.Screen name="CalorieScreen" component={CalorieScreenWithFooter} />
-        <Stack.Screen name="AccountScreen" component={AccountScreenWithFooter} />
+        <Stack.Screen
+          name="WorkoutScreen"
+          component={WorkoutScreenWithFooter}
+        />
+        <Stack.Screen
+          name="CalorieScreen"
+          component={CalorieScreenWithFooter}
+        />
+        <Stack.Screen
+          name="AccountScreen"
+          component={AccountScreenWithFooter}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );
@@ -58,7 +72,7 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   content: {
     flex: 1,
