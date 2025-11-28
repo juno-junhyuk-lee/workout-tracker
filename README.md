@@ -174,32 +174,35 @@ Create a Pull Request on GitHub.
 ===================================
 
 
-# UPDATE FOR WORKOUT FUNCTIONALITY:
-Database Setup
-Required SQL Modifications
-Before running the application, you must execute the following SQL commands to enable AUTO_INCREMENT on primary keys:
-# 1. Fix Workouts Table
+# UPDATE FOR WORKOUT FUNCTIONALITY
 
-sql-- Drop foreign key temporarily
+## Database Setup
 
+### Required SQL Modifications
+Before running the application, execute the following SQL commands to enable `AUTO_INCREMENT` on primary keys.
+
+---
+
+```sql
+-- 1. Fix Workouts Table
+
+-- Drop foreign key temporarily
 ALTER TABLE PerformedExercises
 DROP FOREIGN KEY performedexercises_ibfk_1;
 
 -- Add AUTO_INCREMENT to primary key
-
 ALTER TABLE Workouts
 MODIFY Workouts_ID INT NOT NULL AUTO_INCREMENT;
 
 -- Restore foreign key
-
 ALTER TABLE PerformedExercises
 ADD CONSTRAINT performedexercises_ibfk_1 
 FOREIGN KEY (Workouts_ID) 
 REFERENCES Workouts (Workouts_ID);
 
-# 2. Fix PerformedExercises Table
+-- 2. Fix PerformedExercises Table
 
-sql-- Drop foreign key temporarily
+-- Drop foreign key temporarily
 
 ALTER TABLE sets
 DROP FOREIGN KEY sets_ibfk_1;
@@ -216,9 +219,9 @@ ADD CONSTRAINT sets_ibfk_1
 FOREIGN KEY (PerformedExercises_ID) 
 REFERENCES PerformedExercises (PerformedExercises_ID);
 
-# 3. Fix Sets Table
+-- 3. Fix Sets Table
 
-sql-- Add AUTO_INCREMENT to primary key
+-- Add AUTO_INCREMENT to primary key
 
 ALTER TABLE sets
 MODIFY Sets_ID INT NOT NULL AUTO_INCREMENT;
