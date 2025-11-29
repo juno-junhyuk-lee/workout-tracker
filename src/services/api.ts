@@ -46,6 +46,51 @@ export async function loginUser(email: string, password: string) {
   }
 }
 
+export interface DayStat {
+  label: string;           // "Mon", "Tue", ...
+  workoutMinutes: number;  // total minutes for that day
+  calories: number;        // total calories for that day
+}
+
+export interface HomeScreenData {
+  todayWorkout: {
+    exercises: number;
+    totalSets: number;
+    durationMinutes: number;
+    completed: boolean;
+  };
+  todayCalories: {
+    consumed: number;
+    goal: number;
+  };
+  weeklyStats: {
+    workoutsCompleted: number;
+    workoutsTarget: number;
+    avgCalories: number;
+  };
+  dailyStats: DayStat[];
+}
+
+export async function fetchHomeScreenData(
+  userId: number
+): Promise<HomeScreenData> {
+  const url = `${BASE_URL}/home_summary.php?user_id=${userId}`;
+
+  const res = await fetch(url, {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error(`Home API failed: ${res.status} ${res.statusText}`);
+  }
+
+  const data = (await res.json()) as HomeScreenData;
+  return data;
+}
+
 // GET all exercises from master database
 export async function getExercises() {
   try {

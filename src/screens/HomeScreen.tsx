@@ -10,38 +10,14 @@ import {
   Dimensions,
   Animated,
   LayoutChangeEvent,
+  ActivityIndicator,
 } from "react-native";
 import { BarChart, LineChart } from "react-native-chart-kit";
-import { useNavigation } from "@react-navigation/native";
-
-// ---- dummy data for now (no backend yet) ----
-const MOCK_WORKOUT = {
-  exercises: 6,
-  totalSets: 18,
-  durationMinutes: 45,
-  completed: true,
-};
-
-const MOCK_CALORIES = {
-  consumed: 1850,
-  goal: 2200,
-};
-
-const MOCK_WEEKLY = {
-  workoutsCompleted: 5,
-  workoutsTarget: 7,
-  avgCalories: 2150,
-};
-
-const MOCK_DAYS = [
-  { label: "Mon", workoutMinutes: 52, calories: 1400 },
-  { label: "Tue", workoutMinutes: 40, calories: 1800 },
-  { label: "Wed", workoutMinutes: 48, calories: 1900 },
-  { label: "Thu", workoutMinutes: 50, calories: 2000 },
-  { label: "Fri", workoutMinutes: 45, calories: 1750 },
-  { label: "Sat", workoutMinutes: 30, calories: 1600 },
-  { label: "Sun", workoutMinutes: 0, calories: 1500 },
-];
+import { useNavigation, useIsFocused } from "@react-navigation/native";
+import {
+  fetchHomeScreenData,
+  HomeScreenData,
+} from "../services/api";
 
 const screenWidth = Dimensions.get("window").width;
 const chartWidth = screenWidth - 72;      // frame width
@@ -84,7 +60,12 @@ const calorieChartConfig = {
 };
 
 const HomeScreen: React.FC = () => {
+  const [homeData, setHomeData] = React.useState<HomeScreenData | null>(null);
+  const [loading, setLoading] = React.useState<boolean>(false);
+  const [error, setError] = React.useState<string | null>(null);
   const navigation = useNavigation<any>();
+  const isFocused = useIsFocused();
+
   const [range, setRange] = React.useState<"weekly" | "monthly">("weekly");
   const [segmentWidth, setSegmentWidth] = React.useState(0);
   const thumbAnim = React.useRef(new Animated.Value(0)).current;
@@ -119,20 +100,75 @@ const HomeScreen: React.FC = () => {
           outputRange: [2, segmentWidth / 2 - 2],
         });
 
+  // -------- derive safe defaults when there is no data --------
+  const workoutSummary = homeData?.todayWorkout ?? {
+    exercises: 0,
+    totalSets: 0,
+    durationMinutes: 0,
+    completed: false,
+  };
+
+  const calorieSummary = homeData?.todayCalories ?? {
+    consumed: 0,
+    goal: 0,
+  };
+
+  const weeklyStats = homeData?.weeklyStats ?? {
+    workoutsCompleted: 0,
+    workoutsTarget: 7,
+    avgCalories: 0,
+  };
+
+  const dayStats =
+    homeData?.dailyStats ?? [
+      { label: "Mon", workoutMinutes: 0, calories: 0 },
+      { label: "Tue", workoutMinutes: 0, calories: 0 },
+      { label: "Wed", workoutMinutes: 0, calories: 0 },
+      { label: "Thu", workoutMinutes: 0, calories: 0 },
+      { label: "Fri", workoutMinutes: 0, calories: 0 },
+      { label: "Sat", workoutMinutes: 0, calories: 0 },
+      { label: "Sun", workoutMinutes: 0, calories: 0 },
+    ];
+
   const remainingCalories =
-    MOCK_CALORIES.goal - MOCK_CALORIES.consumed > 0
-      ? MOCK_CALORIES.goal - MOCK_CALORIES.consumed
+    calorieSummary.goal - calorieSummary.consumed > 0
+      ? calorieSummary.goal - calorieSummary.consumed
       : 0;
 
   const workoutData = {
-    labels: MOCK_DAYS.map((d) => d.label),
-    datasets: [{ data: MOCK_DAYS.map((d) => d.workoutMinutes) }],
+    labels: dayStats.map((d) => d.label),
+    datasets: [{ data: dayStats.map((d) => d.workoutMinutes) }],
   };
 
   const calorieData = {
-    labels: MOCK_DAYS.map((d) => d.label),
-    datasets: [{ data: MOCK_DAYS.map((d) => d.calories) }],
+    labels: dayStats.map((d) => d.label),
+    datasets: [{ data: dayStats.map((d) => d.calories) }],
   };
+
+  // -------- load from backend whenever Home gets focus --------
+  React.useEffect(() => {
+    const load = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // TODO: replace 1 with the actual logged-in user id
+        const userId = 1;
+        const data = await fetchHomeScreenData(userId);
+        setHomeData(data);
+      } catch (e: any) {
+        console.log("Failed to load home data:", e?.message ?? e);
+        setError("Could not load latest stats. Showing zeros instead.");
+        setHomeData(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (isFocused) {
+      load();
+    }
+  }, [isFocused]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -151,6 +187,18 @@ const HomeScreen: React.FC = () => {
         <Text style={styles.welcomeText}>Welcome Back, User</Text>
         <Text style={styles.subtitle}>Here&apos;s your today&apos;s progress</Text>
 
+        {loading && (
+          <ActivityIndicator
+            size="small"
+            color="#000"
+            style={{ marginBottom: 8 }}
+          />
+        )}
+        {error && (
+          <Text style={styles.errorText}>{error}</Text>
+        )}
+
+        {/* ---- TODAY'S WORKOUT CARD ---- */}
         <TouchableOpacity
           style={styles.card}
           activeOpacity={0.85}
@@ -161,16 +209,16 @@ const HomeScreen: React.FC = () => {
           <View style={styles.workoutStatsRow}>
             <View style={styles.statBlock}>
               <Text style={styles.statLabel}>Exercises</Text>
-              <Text style={styles.statValue}>{MOCK_WORKOUT.exercises}</Text>
+              <Text style={styles.statValue}>{workoutSummary.exercises}</Text>
             </View>
             <View style={styles.statBlock}>
               <Text style={styles.statLabel}>Total Sets</Text>
-              <Text style={styles.statValue}>{MOCK_WORKOUT.totalSets}</Text>
+              <Text style={styles.statValue}>{workoutSummary.totalSets}</Text>
             </View>
             <View style={styles.statBlock}>
               <Text style={styles.statLabel}>Duration</Text>
               <Text style={styles.statValue}>
-                {MOCK_WORKOUT.durationMinutes} min
+                {workoutSummary.durationMinutes} min
               </Text>
             </View>
           </View>
@@ -180,15 +228,16 @@ const HomeScreen: React.FC = () => {
           <Text
             style={[
               styles.workoutStatus,
-              MOCK_WORKOUT.completed && styles.workoutCompleted,
+              workoutSummary.completed && styles.workoutCompleted,
             ]}
           >
-            {MOCK_WORKOUT.completed
+            {workoutSummary.completed
               ? "Workout Completed!"
               : "Workout not completed yet"}
           </Text>
         </TouchableOpacity>
 
+        {/* ---- CALORIES CARD ---- */}
         <TouchableOpacity
           style={styles.card}
           activeOpacity={0.85}
@@ -199,7 +248,7 @@ const HomeScreen: React.FC = () => {
           <View style={styles.calorieRow}>
             <Text style={styles.calorieConsumedLabel}>Consumed</Text>
             <Text style={styles.calorieConsumedValue}>
-              {MOCK_CALORIES.consumed} / {MOCK_CALORIES.goal} cal
+              {calorieSummary.consumed} / {calorieSummary.goal} cal
             </Text>
           </View>
 
@@ -209,15 +258,21 @@ const HomeScreen: React.FC = () => {
                 styles.progressBarFill,
                 {
                   flex:
-                    MOCK_CALORIES.consumed / Math.max(MOCK_CALORIES.goal, 1),
+                    calorieSummary.goal > 0
+                      ? calorieSummary.consumed /
+                        Math.max(calorieSummary.goal, 1)
+                      : 0,
                 },
               ]}
             />
             <View
               style={{
                 flex:
-                  1 -
-                  MOCK_CALORIES.consumed / Math.max(MOCK_CALORIES.goal, 1),
+                  calorieSummary.goal > 0
+                    ? 1 -
+                      calorieSummary.consumed /
+                        Math.max(calorieSummary.goal, 1)
+                    : 1,
               }}
             />
           </View>
@@ -225,7 +280,7 @@ const HomeScreen: React.FC = () => {
           <View style={styles.calorieBottomRow}>
             <View style={styles.smallInfoBox}>
               <Text style={styles.smallInfoLabel}>Goal</Text>
-              <Text style={styles.smallInfoValue}>{MOCK_CALORIES.goal}</Text>
+              <Text style={styles.smallInfoValue}>{calorieSummary.goal}</Text>
             </View>
             <View style={styles.smallInfoBox}>
               <Text style={styles.smallInfoLabel}>Remaining</Text>
@@ -239,13 +294,13 @@ const HomeScreen: React.FC = () => {
           <View style={[styles.card, styles.smallCard]}>
             <Text style={styles.smallCardLabel}>Weekly Workouts</Text>
             <Text style={styles.smallCardValue}>
-              {MOCK_WEEKLY.workoutsCompleted} / {MOCK_WEEKLY.workoutsTarget} days
+              {weeklyStats.workoutsCompleted} / {weeklyStats.workoutsTarget} days
             </Text>
           </View>
           <View style={[styles.card, styles.smallCard]}>
             <Text style={styles.smallCardLabel}>Avg Calories</Text>
             <Text style={styles.smallCardValue}>
-              {MOCK_WEEKLY.avgCalories.toLocaleString()} cal
+              {weeklyStats.avgCalories.toLocaleString()} cal
             </Text>
           </View>
         </View>
@@ -366,7 +421,7 @@ const HomeScreen: React.FC = () => {
               xLabelsOffset={-5}
               // @ts-ignore
               onDataPointClick={({ value, index, x, y }) => {
-                const d = MOCK_DAYS[index];
+                const d = dayStats[index];
                 setCalorieTooltip({
                   visible: true,
                   x,
@@ -424,7 +479,12 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 14,
     color: "#8E8E93",
-    marginBottom: 16,
+    marginBottom: 8,
+  },
+  errorText: {
+    fontSize: 12,
+    color: "#D32F2F",
+    marginBottom: 8,
   },
   card: {
     backgroundColor: "#FFFFFF",
