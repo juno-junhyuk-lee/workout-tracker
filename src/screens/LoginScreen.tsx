@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Alert, Button, StyleSheet, Text, TextInput, View } from "react-native";
 import { loginUser } from "../services/api";
 
-export default function LoginScreen() {
+export default function LoginScreen({ navigation }: any) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -15,13 +15,15 @@ export default function LoginScreen() {
     const response = await loginUser(email, password);
 
     if (response.status === "success") {
+      const userId = response.user.id;
       Alert.alert(
         "Welcome!",
-        `Logged in as ${response.user.first_name} ${response.user.last_name}`
+        `Logged in as ${response.user.first_name} ${response.user.last_name} (ID: ${userId})`
       );
 
       console.log("User data:", response.user);
 
+      navigation.navigate("WorkoutScreen", { userId: userId });
       // TODO: navigate to homepage
       // navigation.navigate("Home", { user: response.user });
     } else {
@@ -51,6 +53,46 @@ export default function LoginScreen() {
       />
 
       <Button title="Log In" onPress={handleLogin} />
+
+      <View style={styles.signupRow}>
+        <Text style={styles.signupPrompt}>Don&apos;t have an account?</Text>
+        <Text
+          style={styles.signupLink}
+          onPress={() => navigation.navigate("SignupScreen")}
+        >
+          {" "}Sign up
+        </Text>
+      </View>
+
+      <View style={styles.skipSection}>
+        <Text style={styles.skipTitle}>Quick Navigation (Dev)</Text>
+        <View style={styles.skipButton}>
+          <Button
+            title="→ Home"
+            onPress={() => navigation.navigate("HomeScreen")}
+          />
+        </View>
+        {/* <View style={styles.skipButton}>
+          <Button
+            title="→ Workout"
+            onPress={() =>
+              navigation.navigate("WorkoutScreen", { userId: 1 })
+            }
+          />
+        </View> */}
+        <View style={styles.skipButton}>
+          <Button
+            title="→ Calories"
+            onPress={() => navigation.navigate("CalorieScreen")}
+          />
+        </View>
+        <View style={styles.skipButton}>
+          <Button
+            title="→ Account"
+            onPress={() => navigation.navigate("AccountScreen")}
+          />
+        </View>
+      </View>
     </View>
   );
 }
@@ -75,5 +117,34 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     marginBottom: 12,
     fontSize: 16,
+  },
+  signupRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: 16,
+  },
+  signupPrompt: {
+    fontSize: 14,
+    color: "#555",
+  },
+  signupLink: {
+    fontSize: 14,
+    color: "#007AFF",
+    fontWeight: "600",
+  },
+  skipSection: {
+    marginTop: 40,
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: "#ddd",
+  },
+  skipTitle: {
+    fontSize: 14,
+    color: "#999",
+    textAlign: "center",
+    marginBottom: 12,
+  },
+  skipButton: {
+    marginBottom: 8,
   },
 });
