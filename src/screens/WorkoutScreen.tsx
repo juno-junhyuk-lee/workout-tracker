@@ -98,7 +98,6 @@ const handleAddTodaysWorkout = async () => {
     const workoutId = await createWorkout(currentUserId, workoutName, todayDate); 
     
     if (workoutId) {
-        Alert.alert('Success', 'Workout created!');
         loadData();
     }
     // Handle error case if createWorkout returns null
@@ -127,7 +126,6 @@ const handleAddTodaysWorkout = async () => {
     if (performedExerciseId) {
       setShowExerciseModal(false);
       loadData();
-      Alert.alert('Success', `${exercise.Exercises_Name} added!`);
     }
   };
 
@@ -153,7 +151,6 @@ const handleAddTodaysWorkout = async () => {
     if (success) {
       setShowAddSetModal(false);
       loadData();
-      Alert.alert('Success', 'Set added!');
     }
   };
 
@@ -239,11 +236,17 @@ const handleAddTodaysWorkout = async () => {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Workout Tracker</Text>
-        <TouchableOpacity style={styles.headerButton} onPress={handleAddTodaysWorkout}>
-          <Text style={styles.headerButtonText}>+ Add Today's Workout</Text>
-        </TouchableOpacity>
+        {}
+        {!todaysWorkout && (
+          <TouchableOpacity
+            style={styles.headerButton}
+            onPress={handleAddTodaysWorkout}
+          >
+            <Text style={styles.headerButtonText}>+ Add Today&apos;s Workout</Text>
+          </TouchableOpacity>
+        )}
       </View>
-
+      
       <View style={styles.tabs}>
         <TouchableOpacity
           style={[styles.tab, activeTab === 'today' && styles.activeTab]}

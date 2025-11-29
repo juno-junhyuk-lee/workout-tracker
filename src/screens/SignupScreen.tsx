@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Alert, Button, StyleSheet, Text, TextInput, View } from "react-native";
 import { registerUser } from "../services/api";
 
-export default function SignupScreen() {
+export default function SignupScreen({ navigation }: any) {
   const [firstName, setFirstName] = useState<string>("");
   const [lastName, setLastName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
@@ -93,6 +93,12 @@ export default function SignupScreen() {
       />
 
       <Button title="Sign Up" onPress={handleSignup} />
+
+      <View style={styles.backRow}>
+        <Text style={styles.backLink} onPress={() => navigation.navigate("LoginScreen")}>
+          Back to Login
+        </Text>
+      </View>
     </View>
   );
 }
@@ -117,5 +123,14 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     marginBottom: 12,
     fontSize: 16,
+  },
+  backRow: {
+    marginTop: 20,
+    alignItems: "center",
+  },
+  backLink: {
+    fontSize: 14,
+    color: "#007AFF",
+    fontWeight: "600",
   },
 });

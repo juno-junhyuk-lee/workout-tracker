@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const BASE_URL =
-  "https://sulfitic-hypermetaphoric-legend.ngrok-free.dev/workout-tracker-api";
+  "https://pseudohuman-maniacally-nedra.ngrok-free.dev/workout-tracker-api/";
 
 export interface RegisterPayload {
   first_name: string;
