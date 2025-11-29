@@ -22,7 +22,7 @@ export default function LoginScreen({ navigation }: any) {
       );
 
       console.log("User data:", response.user);
-      
+
       navigation.navigate("WorkoutScreen", { userId: userId });
       // TODO: navigate to homepage
       // navigation.navigate("Home", { user: response.user });
@@ -54,19 +54,43 @@ export default function LoginScreen({ navigation }: any) {
 
       <Button title="Log In" onPress={handleLogin} />
 
+      <View style={styles.signupRow}>
+        <Text style={styles.signupPrompt}>Don&apos;t have an account?</Text>
+        <Text
+          style={styles.signupLink}
+          onPress={() => navigation.navigate("SignupScreen")}
+        >
+          {" "}Sign up
+        </Text>
+      </View>
+
       <View style={styles.skipSection}>
         <Text style={styles.skipTitle}>Quick Navigation (Dev)</Text>
         <View style={styles.skipButton}>
-          <Button title="→ Home" onPress={() => navigation.navigate("HomeScreen")} />
+          <Button
+            title="→ Home"
+            onPress={() => navigation.navigate("HomeScreen")}
+          />
         </View>
         {/* <View style={styles.skipButton}>
-          <Button title="→ Workout" onPress={() => navigation.navigate("WorkoutScreen", { userId: 1 })} />
+          <Button
+            title="→ Workout"
+            onPress={() =>
+              navigation.navigate("WorkoutScreen", { userId: 1 })
+            }
+          />
         </View> */}
         <View style={styles.skipButton}>
-          <Button title="→ Calories" onPress={() => navigation.navigate("CalorieScreen")} />
+          <Button
+            title="→ Calories"
+            onPress={() => navigation.navigate("CalorieScreen")}
+          />
         </View>
         <View style={styles.skipButton}>
-          <Button title="→ Account" onPress={() => navigation.navigate("AccountScreen")} />
+          <Button
+            title="→ Account"
+            onPress={() => navigation.navigate("AccountScreen")}
+          />
         </View>
       </View>
     </View>
@@ -93,6 +117,20 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     marginBottom: 12,
     fontSize: 16,
+  },
+  signupRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: 16,
+  },
+  signupPrompt: {
+    fontSize: 14,
+    color: "#555",
+  },
+  signupLink: {
+    fontSize: 14,
+    color: "#007AFF",
+    fontWeight: "600",
   },
   skipSection: {
     marginTop: 40,
