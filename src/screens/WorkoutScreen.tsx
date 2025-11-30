@@ -17,7 +17,10 @@ import {
   addPerformedExercise,
   addSet,
   getTodaysWorkout,
-  getWorkoutHistory
+  getWorkoutHistory,
+  deleteSet,
+  deletePerformedExercise,
+  deleteWorkout,
 } from '../services/api';
 
 interface Exercise {
@@ -26,7 +29,7 @@ interface Exercise {
   Muscle_Group: string | null;
 }
 
-interface Set {
+interface WorkoutSet {
   Sets_ID: number;
   Sets_Weight: number;
   Sets_Rep: number;
@@ -36,7 +39,7 @@ interface PerformedExercise {
   PerformedExercises_ID: number;
   Exercises_ID: number;
   Exercises_Name: string;
-  sets: Set[];
+  sets: WorkoutSet[];
 }
 
 interface Workout {
@@ -44,23 +47,17 @@ interface Workout {
   Workouts_Name: string;
   Workouts_Date: string;
   exercises: PerformedExercise[];
-}
-
-interface WorkoutHistoryItem {
-  Workouts_ID: number;
-  Workouts_Date: string;
-  exercise_count: number;
+  exercise_count?: number;
 }
 
 export default function WorkoutScreen({ route }: any) {
-  
-
   const currentUserId = route?.params?.userId || 1;
 
   const [activeTab, setActiveTab] = useState<'today' | 'history'>('today');
   const [todaysWorkout, setTodaysWorkout] = useState<Workout | null>(null);
-  const [workoutHistory, setWorkoutHistory] = useState<WorkoutHistoryItem[]>([]);
+  const [workoutHistory, setWorkoutHistory] = useState<Workout[]>([]);
   const [loading, setLoading] = useState(false);
+  const [expandedWorkouts, setExpandedWorkouts] = useState<Set<number>>(new Set());
 
   // Modal states
   const [showExerciseModal, setShowExerciseModal] = useState(false);
@@ -90,22 +87,29 @@ export default function WorkoutScreen({ route }: any) {
     setLoading(false);
   };
 
-  // WorkoutScreen.js (CORRECTION)
-const handleAddTodaysWorkout = async () => {
+  const toggleWorkoutExpanded = (workoutId: number) => {
+    setExpandedWorkouts((prev: Set<number>) => {
+      const newSet = new Set(prev);
+      if (newSet.has(workoutId)) {
+        newSet.delete(workoutId);
+      } else {
+        newSet.add(workoutId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleAddTodaysWorkout = async () => {
     const workoutName = `Workout ${new Date().toLocaleDateString()}`;
-    
-    // CHANGE 1: Use createWorkout, which takes Users_ID, Name, and Date
     const workoutId = await createWorkout(currentUserId, workoutName, todayDate); 
     
     if (workoutId) {
-        Alert.alert('Success', 'Workout created!');
-        loadData();
+      Alert.alert('Success', 'Workout created!');
+      loadData();
+    } else {
+      Alert.alert('Error', 'Failed to create workout. Check server logs.');
     }
-    // Handle error case if createWorkout returns null
-    else {
-        Alert.alert('Error', 'Failed to create workout. Check server logs.');
-    }
-};
+  };
 
   const handleAddExercise = async () => {
     const allExercises = await getExercises();
@@ -157,6 +161,76 @@ const handleAddTodaysWorkout = async () => {
     }
   };
 
+  // DELETE HANDLERS
+  const handleDeleteSet = (setId: number) => {
+    Alert.alert(
+      'Delete Set',
+      'Are you sure you want to delete this set?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            const success = await deleteSet(setId);
+            if (success) {
+              Alert.alert('Success', 'Set deleted!');
+              loadData();
+            } else {
+              Alert.alert('Error', 'Failed to delete set');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleDeletePerformedExercise = (performedExerciseId: number, exerciseName: string) => {
+    Alert.alert(
+      'Delete Exercise',
+      `Are you sure you want to delete ${exerciseName} and all its sets?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            const success = await deletePerformedExercise(performedExerciseId);
+            if (success) {
+              Alert.alert('Success', 'Exercise deleted!');
+              loadData();
+            } else {
+              Alert.alert('Error', 'Failed to delete exercise');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleDeleteWorkout = (workoutId: number) => {
+    Alert.alert(
+      'Delete Workout',
+      'Are you sure you want to delete this entire workout? This will remove all exercises and sets.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            const success = await deleteWorkout(workoutId);
+            if (success) {
+              Alert.alert('Success', 'Workout deleted!');
+              loadData();
+            } else {
+              Alert.alert('Error', 'Failed to delete workout');
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const renderTodaysWorkout = () => {
     if (loading) {
       return <ActivityIndicator size="large" color="#000" style={styles.loader} />;
@@ -176,19 +250,44 @@ const handleAddTodaysWorkout = async () => {
     return (
       <ScrollView style={styles.workoutContent}>
         <View style={styles.workoutHeader}>
-          <Text style={styles.workoutTitle}>Today's Workout</Text>
-          <Text style={styles.workoutDate}>{todaysWorkout.Workouts_Date}</Text>
+          <View>
+            <Text style={styles.workoutTitle}>Today's Workout</Text>
+            <Text style={styles.workoutDate}>{todaysWorkout.Workouts_Date}</Text>
+          </View>
+          <TouchableOpacity
+            style={styles.deleteWorkoutButton}
+            onPress={() => handleDeleteWorkout(todaysWorkout.Workouts_ID)}
+          >
+            <Text style={styles.deleteWorkoutButtonText}>Delete Workout</Text>
+          </TouchableOpacity>
         </View>
 
         {todaysWorkout.exercises.map((exercise) => (
           <View key={exercise.PerformedExercises_ID} style={styles.exerciseCard}>
-            <Text style={styles.exerciseName}>{exercise.Exercises_Name}</Text>
+            <View style={styles.exerciseHeader}>
+              <Text style={styles.exerciseName}>{exercise.Exercises_Name}</Text>
+              <TouchableOpacity
+                style={styles.deleteExerciseButtonSmall}
+                onPress={() => handleDeletePerformedExercise(
+                  exercise.PerformedExercises_ID,
+                  exercise.Exercises_Name
+                )}
+              >
+                <Text style={styles.deleteExerciseButtonText}>Delete Exercise</Text>
+              </TouchableOpacity>
+            </View>
             
             {exercise.sets.map((set, index) => (
               <View key={set.Sets_ID} style={styles.setRow}>
                 <Text style={styles.setText}>Set {index + 1}:</Text>
                 <Text style={styles.setText}>{set.Sets_Weight} lbs</Text>
                 <Text style={styles.setText}>{set.Sets_Rep} reps</Text>
+                <TouchableOpacity 
+                  style={styles.deleteSetButtonSmall}
+                  onPress={() => handleDeleteSet(set.Sets_ID)}
+                >
+                  <Text style={styles.deleteSetButtonText}>Delete Set</Text>
+                </TouchableOpacity>
               </View>
             ))}
 
@@ -223,14 +322,61 @@ const handleAddTodaysWorkout = async () => {
 
     return (
       <ScrollView style={styles.historyContent}>
-        {workoutHistory.map((item) => (
-          <View key={item.Workouts_ID} style={styles.historyCard}>
-            <Text style={styles.historyDate}>📅 {item.Workouts_Date}</Text>
-            <Text style={styles.historyDetail}>
-              {item.exercise_count} exercise{item.exercise_count !== 1 ? 's' : ''} completed
-            </Text>
-          </View>
-        ))}
+        {workoutHistory.map((workout) => {
+          const isExpanded = expandedWorkouts.has(workout.Workouts_ID);
+          const totalSets = workout.exercises.reduce((sum, ex) => sum + ex.sets.length, 0);
+          
+          return (
+            <View key={workout.Workouts_ID} style={styles.historyCard}>
+              <TouchableOpacity 
+                style={styles.historyCardHeader}
+                onPress={() => toggleWorkoutExpanded(workout.Workouts_ID)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.historyHeaderLeft}>
+                  <Text style={styles.historyDate}>📅 {workout.Workouts_Date}</Text>
+                  <Text style={styles.historyDetail}>
+                    {workout.exercises.length} exercise{workout.exercises.length !== 1 ? 's' : ''} • {totalSets} set{totalSets !== 1 ? 's' : ''}
+                  </Text>
+                </View>
+                <View style={styles.historyHeaderRight}>
+                  <TouchableOpacity
+                    style={styles.viewButton}
+                    onPress={() => toggleWorkoutExpanded(workout.Workouts_ID)}
+                  >
+                    <Text style={styles.viewButtonText}>{isExpanded ? 'Hide' : 'View'}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      handleDeleteWorkout(workout.Workouts_ID);
+                    }}
+                    style={styles.deleteHistoryButtonSmall}
+                  >
+                    <Text style={styles.deleteHistoryButtonText}>Delete</Text>
+                  </TouchableOpacity>
+                </View>
+              </TouchableOpacity>
+
+              {isExpanded && (
+                <View style={styles.historyExpandedContent}>
+                  {workout.exercises.map((exercise) => (
+                    <View key={exercise.PerformedExercises_ID} style={styles.historyExerciseCard}>
+                      <Text style={styles.historyExerciseName}>{exercise.Exercises_Name}</Text>
+                      {exercise.sets.map((set, index) => (
+                        <View key={set.Sets_ID} style={styles.historySetRow}>
+                          <Text style={styles.historySetText}>
+                            Set {index + 1}: {set.Sets_Weight} lbs × {set.Sets_Rep} reps
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+          );
+        })}
       </ScrollView>
     );
   };
@@ -239,9 +385,14 @@ const handleAddTodaysWorkout = async () => {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Workout Tracker</Text>
-        <TouchableOpacity style={styles.headerButton} onPress={handleAddTodaysWorkout}>
-          <Text style={styles.headerButtonText}>+ Add Today's Workout</Text>
-        </TouchableOpacity>
+        {!todaysWorkout && (
+          <TouchableOpacity
+            style={styles.headerButton}
+            onPress={handleAddTodaysWorkout}
+          >
+            <Text style={styles.headerButtonText}>+ Add Today&apos;s Workout</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       <View style={styles.tabs}>
@@ -416,6 +567,9 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   workoutHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
     marginBottom: 20,
   },
   workoutTitle: {
@@ -427,20 +581,48 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
   },
+  deleteWorkoutButton: {
+    backgroundColor: '#D32F2F',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  deleteWorkoutButtonText: {
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: '600',
+  },
   exerciseCard: {
     backgroundColor: '#FFF',
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
   },
+  exerciseHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
   exerciseName: {
     fontSize: 18,
     fontWeight: '600',
-    marginBottom: 12,
+  },
+  deleteExerciseButtonSmall: {
+    backgroundColor: '#D32F2F',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  deleteExerciseButtonText: {
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: '600',
   },
   setRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
@@ -448,6 +630,18 @@ const styles = StyleSheet.create({
   setText: {
     fontSize: 14,
     color: '#333',
+    flex: 1,
+  },
+  deleteSetButtonSmall: {
+    backgroundColor: '#D32F2F',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  deleteSetButtonText: {
+    color: '#FFF',
+    fontSize: 11,
+    fontWeight: '600',
   },
   addSetButton: {
     marginTop: 12,
@@ -477,8 +671,22 @@ const styles = StyleSheet.create({
   historyCard: {
     backgroundColor: '#FFF',
     borderRadius: 12,
-    padding: 16,
     marginBottom: 12,
+    overflow: 'hidden',
+  },
+  historyCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+  },
+  historyHeaderLeft: {
+    flex: 1,
+  },
+  historyHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   historyDate: {
     fontSize: 16,
@@ -486,6 +694,53 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   historyDetail: {
+    fontSize: 14,
+    color: '#666',
+  },
+  viewButton: {
+    backgroundColor: '#4CAF50',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  viewButtonText: {
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  deleteHistoryButtonSmall: {
+    backgroundColor: '#D32F2F',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  deleteHistoryButtonText: {
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  historyExpandedContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
+  },
+  historyExerciseCard: {
+    backgroundColor: '#F9F9F9',
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 12,
+  },
+  historyExerciseName: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 8,
+    color: '#333',
+  },
+  historySetRow: {
+    paddingVertical: 4,
+  },
+  historySetText: {
     fontSize: 14,
     color: '#666',
   },

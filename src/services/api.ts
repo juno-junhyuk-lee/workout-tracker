@@ -159,3 +159,57 @@ export async function getWorkoutHistory(usersId: number) {
     return [];
   }
 }
+
+// DELETE set
+export async function deleteSet(setsId: number) {
+  try {
+    const response = await fetch(`${BASE_URL}/delete_set.php`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sets_id: setsId,
+      }),
+    });
+    const data = await response.json();
+    return data.status === 'success';
+  } catch (error) {
+    console.error('Error deleting set:', error);
+    return false;
+  }
+}
+
+// DELETE performed exercise
+export async function deletePerformedExercise(performedExercisesId: number) {
+  try {
+    const response = await fetch(`${BASE_URL}/delete_performed_exercise.php`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        performedexercises_id: performedExercisesId,
+      }),
+    });
+    const data = await response.json();
+    return data.status === 'success';
+  } catch (error) {
+    console.error('Error deleting performed exercise:', error);
+    return false;
+  }
+}
+
+// DELETE workout
+export async function deleteWorkout(workoutsId: number) {
+  try {
+    const response = await fetch(`${BASE_URL}/delete_workout.php`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        workouts_id: workoutsId,
+      }),
+    });
+    const data = await response.json();
+    return data.status === 'success';
+  } catch (error) {
+    console.error('Error deleting workout:', error);
+    return false;
+  }
+}
