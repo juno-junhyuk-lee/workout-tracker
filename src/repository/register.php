@@ -26,7 +26,6 @@ if (!$data || empty($data)) {
     }
 }
 
-
 // Extract fields from JSON
 $first = $data["first_name"] ?? "";
 $last = $data["last_name"] ?? "";
@@ -50,34 +49,63 @@ $username = strtolower($first) . rand(1000, 9999);
 // Hash password
 $password = password_hash($rawPassword, PASSWORD_BCRYPT);
 
-// Prepare SQL insert
-$stmt = $conn->prepare("
-    INSERT INTO Users (First_Name, Last_Name, Email, Username, Password, Age, Gender)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-");
+// Start transaction
+$conn->begin_transaction();
 
-$stmt->bind_param(
-    "sssssis",
-    $first,
-    $last,
-    $email,
-    $username,
-    $password,
-    $age,
-    $gender
-);
+try {
+    // Insert user
+    $stmt = $conn->prepare("
+        INSERT INTO Users (First_Name, Last_Name, Email, Username, Password, Age, Gender)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    ");
 
-// Execute and respond
-if ($stmt->execute()) {
+    $stmt->bind_param(
+        "sssssis",
+        $first,
+        $last,
+        $email,
+        $username,
+        $password,
+        $age,
+        $gender
+    );
+
+    if (!$stmt->execute()) {
+        throw new Exception("Failed to create user: " . $stmt->error);
+    }
+
+    $userId = $conn->insert_id;
+
+    // Initialize default calorie goals: 2000 daily (600+600+600+200)
+    // Column names match your table structure: Users_ID, Daily_Goal, Breakfast, Lunch, Dinner, Snacks
+    $stmtGoals = $conn->prepare("
+        INSERT INTO UserCalorieGoals (Users_ID, Daily_Goal, Breakfast, Lunch, Dinner, Snacks)
+        VALUES (?, 2000, 600, 600, 600, 200)
+    ");
+    
+    $stmtGoals->bind_param("i", $userId);
+    
+    if (!$stmtGoals->execute()) {
+        throw new Exception("Failed to initialize calorie goals: " . $stmtGoals->error);
+    }
+
+    // Commit transaction
+    $conn->commit();
+
     echo json_encode([
         "status" => "success",
         "message" => "User registered successfully",
-        "username" => $username
+        "username" => $username,
+        "userId" => $userId
     ]);
-} else {
+
+} catch (Exception $e) {
+    // Rollback on error
+    $conn->rollback();
+    
     echo json_encode([
         "status" => "error",
-        "message" => $stmt->error
+        "message" => $e->getMessage()
     ]);
 }
 ?>
