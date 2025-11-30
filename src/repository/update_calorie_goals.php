@@ -19,15 +19,16 @@ if (!$userId || !$dailyGoal) {
     exit;
 }
 
+// Column names must match your table: Users_ID, Daily_Goal, Breakfast, Lunch, Dinner, Snacks
 $sql = "
-    INSERT INTO UserCalorieGoals (userId, dailyGoal, breakfast, lunch, dinner, snacks) 
+    INSERT INTO UserCalorieGoals (Users_ID, Daily_Goal, Breakfast, Lunch, Dinner, Snacks) 
     VALUES (?, ?, ?, ?, ?, ?)
     ON DUPLICATE KEY UPDATE 
-        dailyGoal = VALUES(dailyGoal),
-        breakfast = VALUES(breakfast),
-        lunch = VALUES(lunch),
-        dinner = VALUES(dinner),
-        snacks = VALUES(snacks)
+        Daily_Goal = VALUES(Daily_Goal),
+        Breakfast = VALUES(Breakfast),
+        Lunch = VALUES(Lunch),
+        Dinner = VALUES(Dinner),
+        Snacks = VALUES(Snacks)
 ";
 
 $stmt = $conn->prepare($sql);
@@ -44,3 +45,4 @@ if ($stmt->execute()) {
         "message" => "Failed to update calorie goals: " . $stmt->error
     ]);
 }
+?>
