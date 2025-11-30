@@ -1,102 +1,139 @@
-import { useState } from 'react';
-import { ScrollView, View, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { useState, useEffect } from 'react';
+import { ScrollView, View, TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CalorieProgress } from './CalorieComponents/CalorieProgress';
 import { MacroCard } from './CalorieComponents/MacroCard';
 import { MealSection } from './CalorieComponents/MealSection';
 import { AddFoodModal } from './CalorieComponents/AddFoodModal';
 import { FoodDetailModal } from './CalorieComponents/FoodDetailModal';
-import type { FoodItem, FoodDatabaseItem, Meal, MacroData } from '../types';
+import { getFoods, getFoodLog, insertFoodLog, deleteFoodLog } from '../services/api';
+import type { FoodDatabaseItem, FoodLogItem, MacroData } from '../types';
 
+
+// TODO: Get this from user context/auth
+const CURRENT_USER_ID = 1;
 
 export function CalorieTracker() {
-  const [activeTab, setActiveTab] = useState('calories');
   const [isAddFoodModalOpen, setIsAddFoodModalOpen] = useState(false);
   const [isFoodDetailModalOpen, setIsFoodDetailModalOpen] = useState(false);
-  const [selectedMealIndex, setSelectedMealIndex] = useState<number | null>(null);
+  const [selectedMealType, setSelectedMealType] = useState<string>('');
   const [selectedFood, setSelectedFood] = useState<FoodDatabaseItem | null>(null);
+  const [foodLog, setFoodLog] = useState<FoodLogItem[]>([]);
+  const [foods, setFoods] = useState<FoodDatabaseItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const calorieData = {
-    consumed: 1842,
-    goal: 2200,
+  const today = new Date().toISOString().split('T')[0];
+
+  // Fetch foods and food log on mount
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  // Open FoodDetailModal when a food is selected
+  useEffect(() => {
+    if (selectedFood) {
+      setIsFoodDetailModalOpen(true);
+    }
+  }, [selectedFood]);
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [foodsData, foodLogData] = await Promise.all([
+        getFoods(),
+        getFoodLog(CURRENT_USER_ID)
+      ]);
+      setFoods(foodsData);
+      // Filter food log for today
+      const todayLog = foodLogData.filter((item: FoodLogItem) => 
+        item.FoodLog_Date === today
+      );
+      setFoodLog(todayLog);
+    } catch (error) {
+      console.error('Error loading data:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
+  // Calculate totals from food log
+  const totalCalories = foodLog.reduce((sum, item) => 
+    sum + (item.Calories_Per_Serving * item.Serving_Quantity), 0
+  );
+
+  const calorieGoal = 2200; //TODO: Get From user settings 
+
   const macros: MacroData[] = [
-    { label: 'Protein', current: 78, goal: 165, unit: 'g', color: '#ff6b6b' },
-    { label: 'Carbs', current: 142, goal: 220, unit: 'g', color: '#4ecdc4' },
-    { label: 'Fat', current: 58, goal: 73, unit: 'g', color: '#ffd93d' },
+    { label: 'Protein', current: 0, goal: 165, unit: 'g', color: '#ff6b6b' },
+    { label: 'Carbs', current: 0, goal: 220, unit: 'g', color: '#4ecdc4' },
+    { label: 'Fat', current: 0, goal: 73, unit: 'g', color: '#ffd93d' },
   ];
 
-  const [meals, setMeals] = useState<Meal[]>([
-    {
-      mealName: 'Breakfast',
-      targetCalories: 550,
-      foods: [
-        { id: '1', name: 'Oatmeal with berries', calories: 320, portion: '1 bowl' },
-        { id: '2', name: 'Greek yogurt', calories: 150, portion: '170g' },
-        { id: '3', name: 'Coffee with milk', calories: 35, portion: '1 cup' },
-      ],
-    },
-    {
-      mealName: 'Lunch',
-      targetCalories: 700,
-      foods: [
-        { id: '4', name: 'Grilled chicken salad', calories: 425, portion: '350g' },
-        { id: '5', name: 'Whole grain bread', calories: 140, portion: '2 slices' },
-      ],
-    },
-    {
-      mealName: 'Dinner',
-      targetCalories: 700,
-      foods: [
-        { id: '6', name: 'Salmon fillet', calories: 380, portion: '200g' },
-        { id: '7', name: 'Brown rice', calories: 215, portion: '1 cup' },
-        { id: '8', name: 'Steamed broccoli', calories: 55, portion: '150g' },
-      ],
-    },
-    {
-      mealName: 'Snacks',
-      targetCalories: 250,
-      foods: [
-        { id: '9', name: 'Apple', calories: 95, portion: '1 medium' },
-        { id: '10', name: 'Almonds', calories: 164, portion: '28g' },
-      ],
-    },
-  ]);
+  //Todo: Add groupings depednant on settings
+  const meals = [
+    { mealName: 'Breakfast', targetCalories: 550, foods: foodLog },
+    { mealName: 'Lunch', targetCalories: 700, foods: [] as FoodLogItem[] },
+    { mealName: 'Dinner', targetCalories: 700, foods: [] as FoodLogItem[] },
+    { mealName: 'Snacks', targetCalories: 250, foods: [] as FoodLogItem[] },
+  ];
 
   const handleOpenAddFood = (mealIndex: number) => {
-    setSelectedMealIndex(mealIndex);
+    setSelectedMealType(meals[mealIndex].mealName);
     setIsAddFoodModalOpen(true);
   };
 
   const handleSelectFood = (food: FoodDatabaseItem) => {
-    setSelectedFood(food);
-    setIsFoodDetailModalOpen(true);
+    setIsAddFoodModalOpen(false);
+    setSelectedFood(food); 
   };
 
-  const handleAddFood = (food: FoodDatabaseItem, servings: number) => {
-    if (selectedMealIndex === null) return;
+  const handleAddFood = async (food: FoodDatabaseItem, servings: number) => {
+    try {
+      const success = await insertFoodLog(
+        CURRENT_USER_ID,
+        food.Foods_ID,
+        today,
+        servings
+      );
+      if (success) {
+        // Reload food log
+        await loadData();
+      }
+    } catch (error) {
+      console.error('Error adding food:', error);
+    }
 
-    const newFood: FoodItem = {
-      id: `${Date.now()}`,
-      name: food.name,
-      calories: Math.round(food.calories * servings),
-      portion: servings === 1 ? food.portion : `${servings} × ${food.portion}`,
-    };
-
-    setMeals(prevMeals => {
-      const updatedMeals = [...prevMeals];
-      updatedMeals[selectedMealIndex] = {
-        ...updatedMeals[selectedMealIndex],
-        foods: [...updatedMeals[selectedMealIndex].foods, newFood],
-      };
-      return updatedMeals;
-    });
-
-    // Close both modals
+    // Close both modals and clear selection
     setIsFoodDetailModalOpen(false);
     setIsAddFoodModalOpen(false);
+    setSelectedFood(null);
   };
+
+  const handleCloseFoodDetail = () => {
+    setIsFoodDetailModalOpen(false);
+    setSelectedFood(null);
+  };
+
+  const handleDeleteFood = async (foodLogId: number) => {
+    try {
+      const success = await deleteFoodLog(foodLogId);
+      if (success) {
+        await loadData();
+      }
+    } catch (error) {
+      console.error('Error deleting food:', error);
+    }
+  };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#007AFF" />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -110,25 +147,8 @@ export function CalorieTracker() {
 
         {/* Progress Card */}
         <View style={styles.progressCard}>
-          <CalorieProgress consumed={calorieData.consumed} goal={calorieData.goal} />
+          <CalorieProgress consumed={totalCalories} goal={calorieGoal} />
         </View>
-
-        <View style={styles.macrosSection}>
-          <Text style={styles.sectionTitle}>Macronutrients</Text>
-          <View style={styles.macrosContainer}>
-            {macros.map((macro) => (
-              <MacroCard
-                key={macro.label}
-                label={macro.label}
-                current={macro.current}
-                goal={macro.goal}
-                unit={macro.unit}
-                color={macro.color}
-              />
-            ))}
-          </View>
-        </View>
-
 
         <View style={styles.mealsSection}>
           <Text style={styles.sectionTitle}>Meals</Text>
@@ -149,12 +169,13 @@ export function CalorieTracker() {
         isOpen={isAddFoodModalOpen}
         onClose={() => setIsAddFoodModalOpen(false)}
         onSelectFood={handleSelectFood}
-        mealName={selectedMealIndex !== null ? meals[selectedMealIndex].mealName : ''}
+        mealName={selectedMealType}
+        foods={foods}
       />
 
       <FoodDetailModal
         isOpen={isFoodDetailModalOpen}
-        onClose={() => setIsFoodDetailModalOpen(false)}
+        onClose={handleCloseFoodDetail}
         onAdd={handleAddFood}
         food={selectedFood}
       />
@@ -167,6 +188,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'white',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   scrollView: {
     flex: 1,

@@ -1,17 +1,17 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import type { FoodItem } from '../../types';
+import type { FoodLogItem } from '../../types';
 
 interface MealSectionProps {
   mealName: string;
   targetCalories: number;
-  foods: FoodItem[];
+  foods: FoodLogItem[];
   onAddClick: () => void;
 }
 
 export function MealSection({ mealName, targetCalories, foods, onAddClick }: MealSectionProps) {
-  const totalCalories = foods.reduce((sum, food) => sum + food.calories, 0);
+  const totalCalories = foods.reduce((sum, food) => sum + (food.Calories_Per_Serving * food.Serving_Quantity), 0);
 
   return (
     <View style={styles.container}>
@@ -31,17 +31,19 @@ export function MealSection({ mealName, targetCalories, foods, onAddClick }: Mea
         <View style={styles.foodList}>
           {foods.map((food, index) => (
             <View
-              key={food.id}
+              key={food.FoodLog_ID}
               style={[
                 styles.foodItem,
                 index !== foods.length - 1 && styles.foodItemBorder,
               ]}
             >
               <View style={styles.foodInfo}>
-                <Text style={styles.foodName}>{food.name}</Text>
-                <Text style={styles.foodPortion}>{food.portion}</Text>
+                <Text style={styles.foodName}>{food.Foods_Name}</Text>
+                <Text style={styles.foodPortion}>
+                  {food.Serving_Quantity} serving(s){food.Foods_Category ? ` • ${food.Foods_Category}` : ''}
+                </Text>
               </View>
-              <Text style={styles.foodCalories}>{food.calories}</Text>
+              <Text style={styles.foodCalories}>{Math.round(food.Calories_Per_Serving * food.Serving_Quantity)}</Text>
             </View>
           ))}
         </View>

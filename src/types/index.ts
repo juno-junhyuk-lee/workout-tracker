@@ -1,17 +1,28 @@
+// Database Food item (from Foods table)
+export interface FoodDatabaseItem {
+  Foods_ID: number;
+  Foods_Name: string;
+  Calories_Per_Serving: number;
+  Foods_Category?: string;
+}
+
+// Food log entry (from FoodLog table with joined Food data)
+export interface FoodLogItem {
+  FoodLog_ID: number;
+  Users_ID: number;
+  Foods_ID: number;
+  FoodLog_Date: string;
+  Serving_Quantity: number;
+  Foods_Name: string;
+  Calories_Per_Serving: number;
+  Foods_Category: string; 
+}
+
+// Local display item
 export interface FoodItem {
   id: string;
   name: string;
   calories: number;
-  portion: string;
-}
-
-export interface FoodDatabaseItem {
-  id: string;
-  name: string;
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
   portion: string;
   category: string;
 }
@@ -19,7 +30,7 @@ export interface FoodDatabaseItem {
 export interface Meal {
   mealName: string;
   targetCalories: number;
-  foods: FoodItem[];
+  foods: FoodLogItem[];
 }
 
 export interface MacroData {

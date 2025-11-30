@@ -16,10 +16,7 @@ export function FoodDetailModal({ isOpen, onClose, onAdd, food }: FoodDetailModa
 
   if (!food) return null;
 
-  const multipliedCalories = Math.round(food.calories * servings);
-  const multipliedProtein = Math.round(food.protein * servings);
-  const multipliedCarbs = Math.round(food.carbs * servings);
-  const multipliedFat = Math.round(food.fat * servings);
+  const multipliedCalories = Math.round(food.Calories_Per_Serving * servings);
 
   const handleAdd = () => {
     onAdd(food, servings);
@@ -39,19 +36,20 @@ export function FoodDetailModal({ isOpen, onClose, onAdd, food }: FoodDetailModa
       <SafeAreaView style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-            <Ionicons name="close" size={24} color="#1d1d1f" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Food Details</Text>
-          <View style={styles.spacer} />
+          <View style={styles.headerTop}>
+            <Text style={styles.headerTitle}>Food Details</Text>
+            <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
+              <Ionicons name="close" size={24} color="#1d1d1f" />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Content */}
         <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
           {/* Food Name */}
           <View style={styles.foodNameSection}>
-            <Text style={styles.foodName}>{food.name}</Text>
-            <Text style={styles.foodPortion}>{food.portion}</Text>
+            <Text style={styles.foodName}>{food.Foods_Name}</Text>
+            <Text style={styles.foodPortion}>{food.Foods_Category || 'Uncategorized'}</Text>
           </View>
 
           {/* Calorie Display */}
@@ -87,64 +85,19 @@ export function FoodDetailModal({ isOpen, onClose, onAdd, food }: FoodDetailModa
             </View>
           </View>
 
-          {/* Macro Breakdown */}
+          {/* Info Section */}
           <View style={styles.macroSection}>
-            <Text style={styles.macroTitle}>Nutrition Facts</Text>
-
-            {/* Protein */}
+            <Text style={styles.macroTitle}>Nutrition Info</Text>
             <View style={styles.macroCard}>
               <View style={styles.macroRow}>
-                <Text style={styles.macroLabel}>Protein</Text>
-                <Text style={styles.macroValue}>{multipliedProtein}g</Text>
-              </View>
-              <View style={styles.progressBar}>
-                <View
-                  style={[
-                    styles.progressFill,
-                    {
-                      width: `${Math.min((multipliedProtein / 165) * 100, 100)}%`,
-                      backgroundColor: '#ff6b6b',
-                    },
-                  ]}
-                />
+                <Text style={styles.macroLabel}>Calories per serving</Text>
+                <Text style={styles.macroValue}>{food.Calories_Per_Serving}</Text>
               </View>
             </View>
-
-            {/* Carbs */}
             <View style={styles.macroCard}>
               <View style={styles.macroRow}>
-                <Text style={styles.macroLabel}>Carbohydrates</Text>
-                <Text style={styles.macroValue}>{multipliedCarbs}g</Text>
-              </View>
-              <View style={styles.progressBar}>
-                <View
-                  style={[
-                    styles.progressFill,
-                    {
-                      width: `${Math.min((multipliedCarbs / 220) * 100, 100)}%`,
-                      backgroundColor: '#4ecdc4',
-                    },
-                  ]}
-                />
-              </View>
-            </View>
-
-            {/* Fat */}
-            <View style={styles.macroCard}>
-              <View style={styles.macroRow}>
-                <Text style={styles.macroLabel}>Fat</Text>
-                <Text style={styles.macroValue}>{multipliedFat}g</Text>
-              </View>
-              <View style={styles.progressBar}>
-                <View
-                  style={[
-                    styles.progressFill,
-                    {
-                      width: `${Math.min((multipliedFat / 73) * 100, 100)}%`,
-                      backgroundColor: '#ffd93d',
-                    },
-                  ]}
-                />
+                <Text style={styles.macroLabel}>Total for {servings} serving(s)</Text>
+                <Text style={styles.macroValue}>{multipliedCalories} cal</Text>
               </View>
             </View>
           </View>
@@ -167,14 +120,17 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
   },
   header: {
+    backgroundColor: 'white',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e5e7',
+    paddingHorizontal: 24,
+    paddingTop: 60,
+    paddingBottom: 16,
+  },
+  headerTop: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    paddingTop: 35,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e5e7',
   },
   closeButton: {
     width: 32,
@@ -185,12 +141,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '600',
     color: '#1d1d1f',
-  },
-  spacer: {
-    width: 32,
   },
   content: {
     flex: 1,
