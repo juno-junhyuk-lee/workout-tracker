@@ -7,7 +7,7 @@ import { MealSection } from './CalorieComponents/MealSection';
 import { AddFoodModal } from './CalorieComponents/AddFoodModal';
 import { FoodDetailModal } from './CalorieComponents/FoodDetailModal';
 import { CalorieSettingsModal } from './CalorieComponents/CalorieSettingsModal';
-import { getFoods, getFoodLog, insertFoodLog, deleteFoodLog, updateFoodLog, getCalorieGoals, updateCalorieGoals } from '../services/api';
+import { getFoods, getFoodLog, insertFoodLog, deleteFoodLog, updateFoodLog, getCalorieGoals, updateCalorieGoals, getDailyCalories } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import type { FoodDatabaseItem, FoodLogItem, MacroData } from '../types';
 
@@ -46,6 +46,7 @@ export function CalorieTracker() {
   const [selectedFoodLog, setSelectedFoodLog] = useState<FoodLogItem | null>(null);
   const [foods, setFoods] = useState<FoodDatabaseItem[]>([]);
   const [calorieGoals, setCalorieGoals] = useState<CalorieGoals>(DEFAULT_GOALS);
+  const [totalCalories, setTotalCalories] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   
   // Dictionary: { "Breakfast": [...foods], "Lunch": [...foods], etc. }
@@ -77,9 +78,20 @@ export function CalorieTracker() {
     }
   }, [selectedFoodLog]);
 
-  const loadData = async () => {
+  // Refresh total calories from database using GetDailyCalories SQL function
+  const refreshTotalCalories = async () => {
     if (!currentUserId) return;
-    setLoading(true);
+    try {
+      const calories = await getDailyCalories(currentUserId, today);
+      setTotalCalories(calories);
+    } catch (error) {
+      console.error('Error refreshing calories:', error);
+    }
+  };
+
+  const loadData = async (showLoading = true) => {
+    if (!currentUserId) return;
+    if (showLoading) setLoading(true);
     try {
       const [foodsData, foodLogData, goalsData] = await Promise.all([
         getFoods(),
@@ -87,10 +99,25 @@ export function CalorieTracker() {
         getCalorieGoals(currentUserId)
       ]);
       setFoods(foodsData);
+      
       // Filter food log for today and organize by meal
       const todayLog = foodLogData.filter((item: FoodLogItem) => 
         item.FoodLog_Date === today
       );
+      
+      //FallBack
+      const calculatedCalories = todayLog.reduce((sum: number, item: FoodLogItem) => 
+        sum + (item.Calories_Per_Serving * item.Serving_Quantity), 0
+      );
+      
+      // Try to get from database function, fallback to calculated
+      try {
+        const dailyCalories = await getDailyCalories(currentUserId, today);
+        setTotalCalories(dailyCalories);
+      } catch {
+        setTotalCalories(calculatedCalories);
+      }
+      
       // Organize foods into dictionary by meal type
       const organized: MealFoodsMap = {
         Breakfast: [],
@@ -117,19 +144,7 @@ export function CalorieTracker() {
     }
   };
 
-  // Calculate totals from all meal food logs
-  const totalCalories = Object.values(mealFoods).flat().reduce((sum: number, item: FoodLogItem) => 
-    sum + (item.Calories_Per_Serving * item.Serving_Quantity), 0
-  );
-
-  const macros: MacroData[] = [
-    { label: 'Protein', current: 0, goal: 165, unit: 'g', color: '#ff6b6b' },
-    { label: 'Carbs', current: 0, goal: 220, unit: 'g', color: '#4ecdc4' },
-    { label: 'Fat', current: 0, goal: 73, unit: 'g', color: '#ffd93d' },
-  ];
-
   // Use goals from database for meal targets (null == disabled)
-  // Get foods from dictionary
   const allMeals = [
     { mealName: 'Breakfast', targetCalories: calorieGoals.breakfast ?? 0, foods: mealFoods.Breakfast },
     { mealName: 'Lunch', targetCalories: calorieGoals.lunch ?? 0, foods: mealFoods.Lunch },
@@ -163,8 +178,8 @@ export function CalorieTracker() {
         selectedMealType // Pass the meal type
       );
       if (success) {
-        // Reload food log
-        await loadData();
+        // Reload food log without showing loading spinner
+        await loadData(false);
       }
     } catch (error) {
       console.error('Error adding food:', error);
@@ -186,7 +201,7 @@ export function CalorieTracker() {
     try {
       const success = await deleteFoodLog(foodLogId);
       if (success) {
-        await loadData();
+        await loadData(false);
       }
     } catch (error) {
       console.error('Error deleting food:', error);
@@ -209,7 +224,7 @@ export function CalorieTracker() {
         newServings
       );
       if (success) {
-        await loadData();
+        await loadData(false);
       }
     } catch (error) {
       console.error('Error updating food log:', error);

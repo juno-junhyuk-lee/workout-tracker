@@ -459,6 +459,18 @@ export async function updateCalorieGoals(
   }
 }
 
+// Get daily calories using SQL function GetDailyCalories
+export async function getDailyCalories(userId: number, date: string): Promise<number> {
+  try {
+    const response = await fetch(`${BASE_URL}/get_daily_calories.php?Users_ID=${userId}&Date=${date}`);
+    if (!response.ok) return 0;
+    const data = await response.json();
+    return data.status === 'success' ? data.totalCalories : 0;
+  } catch {
+    return 0;
+  }
+}
+
 
 
 
