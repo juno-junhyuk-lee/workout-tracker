@@ -75,7 +75,9 @@ const HomeScreen: React.FC = () => {
   // Get current user from session
   const { user } = useAuth();
   const userId = user?.id ?? 0;
-  const userName = user?.first_name ?? "User";
+  const userName = user
+  ? `${user.first_name} ${user.last_name}`
+  : "User";
 
   const [range, setRange] = React.useState<"weekly" | "monthly">("weekly");
   const [segmentWidth, setSegmentWidth] = React.useState(0);
@@ -255,15 +257,10 @@ const HomeScreen: React.FC = () => {
               <Text style={styles.statLabel}>Exercises</Text>
               <Text style={styles.statValue}>{workoutSummary.exercises}</Text>
             </View>
+
             <View style={styles.statBlock}>
               <Text style={styles.statLabel}>Total Sets</Text>
               <Text style={styles.statValue}>{workoutSummary.totalSets}</Text>
-            </View>
-            <View style={styles.statBlock}>
-              <Text style={styles.statLabel}>Duration</Text>
-              <Text style={styles.statValue}>
-                {workoutSummary.durationMinutes} min
-              </Text>
             </View>
           </View>
 
