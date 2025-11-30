@@ -222,9 +222,6 @@ const HomeScreen: React.FC = () => {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Dashboard</Text>
-        <TouchableOpacity style={styles.settingsButton}>
-          <Text style={styles.settingsIcon}>⚙️</Text>
-        </TouchableOpacity>
       </View>
 
       <ScrollView
@@ -434,7 +431,7 @@ const HomeScreen: React.FC = () => {
                 style={[
                   styles.tooltip,
                   {
-                    left: calorieTooltip.x - 90,
+                    left: calorieTooltip.x - 100,
                     top: calorieTooltip.y - 30,
                   },
                 ]}
