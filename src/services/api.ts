@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const BASE_URL =
-  "https://holocrine-shantae-prestricken.ngrok-free.dev/workout-tracker-api";
+  "https://minerva-unweakening-meteorically.ngrok-free.dev/workout-tracker-api";
 
 export interface RegisterPayload {
   first_name: string;
