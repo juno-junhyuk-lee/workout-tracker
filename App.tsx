@@ -1,6 +1,8 @@
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { View, StyleSheet } from "react-native";
+import { AuthProvider } from "./src/context/AuthContext";
+
 import AuthScreen from "./src/screens/AuthScreen";
 import WorkoutScreen from "./src/screens/WorkoutScreen";
 import HomeScreen from "./src/screens/HomeScreen";
@@ -10,12 +12,7 @@ import FooterNavigation from "./src/components/FooterNavigation";
 
 const Stack = createNativeStackNavigator();
 
-interface ScreenWrapperProps {
-  children: React.ReactNode;
-  showFooter: boolean;
-}
-
-function ScreenWrapper({ children, showFooter }: ScreenWrapperProps) {
+function ScreenWrapper({ children, showFooter }: any) {
   return (
     <View style={styles.container}>
       <View style={styles.content}>{children}</View>
@@ -24,48 +21,43 @@ function ScreenWrapper({ children, showFooter }: ScreenWrapperProps) {
   );
 }
 
-const HomeScreenWithFooter = () => (
-  <ScreenWrapper showFooter={true}>
-    <HomeScreen />
-  </ScreenWrapper>
-);
-const WorkoutScreenWithFooter = () => (
-  <ScreenWrapper showFooter={true}>
-    <WorkoutScreen />
-  </ScreenWrapper>
-);
-const CalorieScreenWithFooter = () => (
-  <ScreenWrapper showFooter={true}>
-    <CalorieScreen />
-  </ScreenWrapper>
-);
-const AccountScreenWithFooter = () => (
-  <ScreenWrapper showFooter={true}>
-    <AccountScreen />
-  </ScreenWrapper>
-);
-
 export default function App() {
   return (
-    <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="AuthScreen" component={AuthScreen} />
-
-        <Stack.Screen name="HomeScreen" component={HomeScreenWithFooter} />
-        <Stack.Screen
-          name="WorkoutScreen"
-          component={WorkoutScreenWithFooter}
-        />
-        <Stack.Screen
-          name="CalorieScreen"
-          component={CalorieScreenWithFooter}
-        />
-        <Stack.Screen
-          name="AccountScreen"
-          component={AccountScreenWithFooter}
-        />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <AuthProvider>
+      <NavigationContainer>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="AuthScreen" component={AuthScreen} />
+          <Stack.Screen name="HomeScreen">
+            {() => (
+              <ScreenWrapper showFooter>
+                <HomeScreen />
+              </ScreenWrapper>
+            )}
+          </Stack.Screen>
+          <Stack.Screen name="WorkoutScreen">
+            {() => (
+              <ScreenWrapper showFooter>
+                <WorkoutScreen />
+              </ScreenWrapper>
+            )}
+          </Stack.Screen>
+          <Stack.Screen name="CalorieScreen">
+            {() => (
+              <ScreenWrapper showFooter>
+                <CalorieScreen />
+              </ScreenWrapper>
+            )}
+          </Stack.Screen>
+          <Stack.Screen name="AccountScreen">
+            {() => (
+              <ScreenWrapper showFooter>
+                <AccountScreen />
+              </ScreenWrapper>
+            )}
+          </Stack.Screen>
+        </Stack.Navigator>
+      </NavigationContainer>
+    </AuthProvider>
   );
 }
 

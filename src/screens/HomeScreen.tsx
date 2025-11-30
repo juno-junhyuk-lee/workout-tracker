@@ -1,10 +1,18 @@
-import { StyleSheet, Text, View } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
+import { useAuth } from "../context/AuthContext";
 
-export default function HomeScreen({ navigation }: any) {
+export default function HomeScreen() {
+  const { user } = useAuth();
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Home Screen</Text>
-      <Text style={styles.subtitle}>Track your daily progress</Text>
+      <Text style={styles.title}>Welcome!</Text>
+
+      {user && (
+        <Text style={styles.subtitle}>
+          Hello {user.first_name} {user.last_name}
+        </Text>
+      )}
     </View>
   );
 }

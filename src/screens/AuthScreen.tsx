@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { registerUser, loginUser } from "../services/api";
 import { Alert } from "react-native";
+import { useAuth } from "../context/AuthContext";
 
 export default function AuthScreen({ navigation }: any) {
   const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
@@ -16,6 +17,7 @@ export default function AuthScreen({ navigation }: any) {
   // Login state
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
+  const { login } = useAuth();
 
   // Signup state
   const [firstName, setFirstName] = useState("");
@@ -67,8 +69,7 @@ export default function AuthScreen({ navigation }: any) {
     const res = await loginUser(loginEmail, loginPassword);
 
     if (res.status === "success") {
-      Alert.alert("Welcome!", `${res.user.first_name} ${res.user.last_name}`);
-
+      login(res.user); // ✅ SAVE USER CONTEXT
       navigation.navigate("HomeScreen");
     } else {
       Alert.alert("Login Failed", res.message ?? "Invalid credentials");
@@ -135,7 +136,10 @@ export default function AuthScreen({ navigation }: any) {
               onChangeText={setLoginPassword}
             />
 
-            <TouchableOpacity style={styles.primaryButton}>
+            <TouchableOpacity
+              style={styles.primaryButton}
+              onPress={handleLogin}
+            >
               <Text style={styles.primaryButtonText}>Login</Text>
             </TouchableOpacity>
 
