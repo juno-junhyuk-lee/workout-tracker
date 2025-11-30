@@ -217,8 +217,13 @@ git push origin feature/login
 
 
 Create a Pull Request on GitHub.
+<<<<<<< HEAD
 <<<<<<< Updated upstream
 =======
 
 
 >>>>>>> Stashed changes
+=======
+
+
+>>>>>>> 11b6c8e86fe05c134df226232a96a684b16dd70d

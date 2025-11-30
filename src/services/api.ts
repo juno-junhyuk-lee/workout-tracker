@@ -48,8 +48,6 @@ export async function loginUser(email: string, password: string) {
 
 // GET all exercises from master database
 export async function getExercises() {
-<<<<<<< Updated upstream
-=======
   try {
     const response = await fetch(`${BASE_URL}/get_exercises.php`);
     const data = await response.json();
@@ -280,7 +278,6 @@ export async function fetchHomeScreenData(
 
 //Get Foods
 export async function getFoods() {
->>>>>>> Stashed changes
   try {
     const response = await fetch(`${BASE_URL}/get_foods.php`);
     const data = await response.json();
@@ -547,58 +544,6 @@ export async function changeEmail(userId: number, newEmail: string) {
   }
 }
 
-<<<<<<< Updated upstream
-export interface DayStat {
-  label: string;
-  workoutMinutes: number;
-  calories: number;
-}
-
-export interface MonthlyStat {
-  label: string;
-  totalSets: number;
-}
-
-export interface HomeScreenData {
-  todayWorkout: {
-    exercises: number;
-    totalSets: number;
-    durationMinutes: number;
-    completed: boolean;
-  };
-  todayCalories: {
-    consumed: number;
-    goal: number;
-  };
-  weeklyStats: {
-    workoutsCompleted: number;
-    workoutsTarget: number;
-    avgCalories: number;
-  };
-  dailyStats: DayStat[];
-  monthlyStats: MonthlyStat[]; 
-}
-
-export async function fetchHomeScreenData(
-  userId: number
-): Promise<HomeScreenData> {
-  const url = `${BASE_URL}/home_summary.php?user_id=${userId}`;
-
-  const res = await fetch(url, {
-    method: "GET",
-    headers: {
-      Accept: "application/json",
-    },
-  });
-
-  if (!res.ok) {
-    throw new Error(`Home API failed: ${res.status} ${res.statusText}`);
-  }
-
-  const data = (await res.json()) as HomeScreenData;
-  return data;
-}
-=======
 export async function changeUsername(userId: number, username: string) {
   const res = await fetch(`${BASE_URL}/change_username.php`, {
     method: "POST",
@@ -608,4 +553,3 @@ export async function changeUsername(userId: number, username: string) {
 
   return res.json();
 }
->>>>>>> Stashed changes

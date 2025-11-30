@@ -21,11 +21,7 @@ import {
   deleteSet,
   deletePerformedExercise,
   deleteWorkout,
-<<<<<<< Updated upstream
-} from '../services/api';
-=======
 } from "../services/api";
->>>>>>> Stashed changes
 import { useAuth } from "../context/AuthContext";
 
 interface Exercise {
