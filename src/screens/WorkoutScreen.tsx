@@ -159,6 +159,22 @@ export default function WorkoutScreen({ route }: any) {
       return;
     }
 
+    const weight = parseFloat(setWeight);
+  const reps = parseInt(setReps);
+
+  // Frontend validation (optional, but provides better UX)
+  if (reps <= 0) {
+    Alert.alert('Error', 'Reps must be greater than 0');
+    return;
+  }
+
+  if (weight < 0) {
+    Alert.alert('Error', 'Weight cannot be negative');
+    return;
+  }
+
+
+
     const success = await addSet(
       currentPerformedExerciseId,
       parseFloat(setWeight),
