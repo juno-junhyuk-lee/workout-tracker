@@ -1,4 +1,3 @@
-// src/screens/HomeScreen.tsx
 import React from "react";
 import {
   View,
@@ -13,11 +12,15 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { BarChart, LineChart } from "react-native-chart-kit";
-import { useNavigation, useIsFocused } from "@react-navigation/native";
+import {
+  useNavigation,
+  useFocusEffect,
+} from "@react-navigation/native";
 import {
   fetchHomeScreenData,
   HomeScreenData,
 } from "../services/api";
+import { getCurrentUser } from "../services/session"; 
 
 const screenWidth = Dimensions.get("window").width;
 const chartWidth = screenWidth - 72;      // frame width
@@ -26,7 +29,7 @@ const lineChartWidth = chartWidth - 24;   // inner width for line chart
 const chartFrameWidth = screenWidth - 72;
 const chartInnerPadding = 8;
 
-// -------- chart configs --------
+// Chart design
 const baseChartConfig = {
   backgroundGradientFrom: "#ffffff",
   backgroundGradientTo: "#ffffff",
@@ -52,6 +55,10 @@ const workoutChartConfig = {
     return `${snapped}`;
   },
   yAxisSuffix: " min",
+  fillShadowGradient: "#000000",
+  fillShadowGradientFrom: "#000000",
+  fillShadowGradientTo: "#000000",
+  fillShadowGradientOpacity: 1,
 };
 
 const calorieChartConfig = {
@@ -64,7 +71,11 @@ const HomeScreen: React.FC = () => {
   const [loading, setLoading] = React.useState<boolean>(false);
   const [error, setError] = React.useState<string | null>(null);
   const navigation = useNavigation<any>();
-  const isFocused = useIsFocused();
+
+  // Get current user from session
+  const sessionUser = getCurrentUser();
+  const userId = sessionUser?.id ?? 0;
+  const userName = sessionUser?.first_name ?? "User";
 
   const [range, setRange] = React.useState<"weekly" | "monthly">("weekly");
   const [segmentWidth, setSegmentWidth] = React.useState(0);
@@ -100,7 +111,7 @@ const HomeScreen: React.FC = () => {
           outputRange: [2, segmentWidth / 2 - 2],
         });
 
-  // -------- derive safe defaults when there is no data --------
+  // Data extraction with defaults
   const workoutSummary = homeData?.todayWorkout ?? {
     exercises: 0,
     totalSets: 0,
@@ -135,9 +146,27 @@ const HomeScreen: React.FC = () => {
       ? calorieSummary.goal - calorieSummary.consumed
       : 0;
 
-  const workoutData = {
+  const monthlyStats =
+    homeData?.monthlyStats ?? [
+      { label: "Jan", totalSets: 0 },
+      { label: "Feb", totalSets: 0 },
+      { label: "Mar", totalSets: 0 },
+      { label: "Apr", totalSets: 0 },
+      { label: "May", totalSets: 0 },
+      { label: "Jun", totalSets: 0 },
+      { label: "Jul", totalSets: 0 },
+    ];
+
+  // Chart data preparation
+  const MINUTES_PER_SET = 5;
+  const weeklyWorkoutData = {
     labels: dayStats.map((d) => d.label),
-    datasets: [{ data: dayStats.map((d) => d.workoutMinutes) }],
+    datasets: [{ data: dayStats.map((d) => d.workoutMinutes / MINUTES_PER_SET) }],
+  };
+
+  const monthlyWorkoutData = {
+    labels: monthlyStats.map((m: any) => m.label),
+    datasets: [{ data: monthlyStats.map((m: any) => m.totalSets) }],
   };
 
   const calorieData = {
@@ -145,30 +174,47 @@ const HomeScreen: React.FC = () => {
     datasets: [{ data: dayStats.map((d) => d.calories) }],
   };
 
-  // -------- load from backend whenever Home gets focus --------
-  React.useEffect(() => {
-    const load = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+  const workoutData =
+    range === "weekly" ? weeklyWorkoutData : monthlyWorkoutData;
 
-        // TODO: replace 1 with the actual logged-in user id
-        const userId = 1;
-        const data = await fetchHomeScreenData(userId);
-        setHomeData(data);
-      } catch (e: any) {
-        console.log("Failed to load home data:", e?.message ?? e);
-        setError("Could not load latest stats. Showing zeros instead.");
-        setHomeData(null);
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Data loading on focus
+  useFocusEffect(
+    React.useCallback(() => {
+      let isActive = true;
 
-    if (isFocused) {
+      const load = async () => {
+        try {
+          if (!userId) return;
+
+          setLoading(true);
+          setError(null);
+
+          console.log("Loading home data for userId:", userId);
+          const data = await fetchHomeScreenData(userId);
+
+          if (!isActive) return;
+          console.log("Home API response:", data);
+          setHomeData(data);
+        } catch (e: any) {
+          console.log("Failed to load home data:", e?.message ?? e);
+          if (isActive) {
+            setError("Could not load latest stats. Showing zeros instead.");
+            setHomeData(null);
+          }
+        } finally {
+          if (isActive) {
+            setLoading(false);
+          }
+        }
+      };
+
       load();
-    }
-  }, [isFocused]);
+
+      return () => {
+        isActive = false;
+      };
+    }, [userId])
+  );
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -184,7 +230,7 @@ const HomeScreen: React.FC = () => {
         contentContainerStyle={{ paddingBottom: 32 }}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.welcomeText}>Welcome Back, User</Text>
+        <Text style={styles.welcomeText}>Welcome Back, {userName}</Text>
         <Text style={styles.subtitle}>Here&apos;s your today&apos;s progress</Text>
 
         {loading && (
@@ -194,15 +240,13 @@ const HomeScreen: React.FC = () => {
             style={{ marginBottom: 8 }}
           />
         )}
-        {error && (
-          <Text style={styles.errorText}>{error}</Text>
-        )}
+        {error && <Text style={styles.errorText}>{error}</Text>}
 
-        {/* ---- TODAY'S WORKOUT CARD ---- */}
+        {/* WORKOUT CARD */}
         <TouchableOpacity
           style={styles.card}
           activeOpacity={0.85}
-          onPress={() => navigation.replace("WorkoutScreen")}
+          onPress={() => navigation.navigate("WorkoutScreen")}
         >
           <Text style={styles.cardTitle}>Today&apos;s Workout</Text>
 
@@ -237,7 +281,7 @@ const HomeScreen: React.FC = () => {
           </Text>
         </TouchableOpacity>
 
-        {/* ---- CALORIES CARD ---- */}
+        {/* CALORIE CARD */}
         <TouchableOpacity
           style={styles.card}
           activeOpacity={0.85}
@@ -292,9 +336,9 @@ const HomeScreen: React.FC = () => {
         {/* Weekly Workouts + Avg Calories */}
         <View style={styles.summaryRow}>
           <View style={[styles.card, styles.smallCard]}>
-            <Text style={styles.smallCardLabel}>Weekly Workouts</Text>
+            <Text style={styles.smallCardLabel}>Weekly Sets</Text>
             <Text style={styles.smallCardValue}>
-              {weeklyStats.workoutsCompleted} / {weeklyStats.workoutsTarget} days
+              {weeklyStats.workoutsCompleted} sets
             </Text>
           </View>
           <View style={[styles.card, styles.smallCard]}>
@@ -356,7 +400,7 @@ const HomeScreen: React.FC = () => {
           </View>
 
           {/* Work Duration Bar Chart */}
-          <Text style={styles.sectionLabel}>Work Duration (minutes)</Text>
+          <Text style={styles.sectionLabel}>Total Sets</Text>
           <View style={styles.chartWrapper}>
             {/* @ts-ignore */}
             <BarChart
@@ -373,7 +417,7 @@ const HomeScreen: React.FC = () => {
                 marginBottom: -10,
               }}
               // @ts-ignore
-              barPercentage={0.15}
+              barPercentage={0.3}
               showValuesOnTopOfBars={true}
               withInnerLines={false}
               withHorizontalLabels={false}
@@ -443,6 +487,7 @@ const HomeScreen: React.FC = () => {
 };
 
 export default HomeScreen;
+
 
 const styles = StyleSheet.create({
   safeArea: {

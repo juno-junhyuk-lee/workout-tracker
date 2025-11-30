@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Alert, Button, StyleSheet, Text, TextInput, View } from "react-native";
 import { loginUser } from "../services/api";
+import { setCurrentUser } from "../services/session";
+
 
 export default function LoginScreen({ navigation }: any) {
   const [email, setEmail] = useState("");
@@ -15,17 +17,33 @@ export default function LoginScreen({ navigation }: any) {
     const response = await loginUser(email, password);
 
     if (response.status === "success") {
-      const userId = response.user.id;
+      const user = response.user;
+      const userId = user.id;
+
+      setCurrentUser(user);
+
       Alert.alert(
         "Welcome!",
-        `Logged in as ${response.user.first_name} ${response.user.last_name} (ID: ${userId})`
+        `Logged in as ${user.first_name} ${user.last_name} (ID: ${userId})`
       );
 
-      console.log("User data:", response.user);
+      console.log("User data:", user);
 
-      navigation.navigate("WorkoutScreen", { userId: userId });
-      // TODO: navigate to homepage
-      // navigation.navigate("Home", { user: response.user });
+      // Reset stack so Home becomes the main screen, and pass user info as params
+      navigation.reset({
+        index: 0,
+        routes: [
+          {
+            name: "HomeScreen",
+            params: {
+              userId: userId,
+              first_name: user.first_name,
+              last_name: user.last_name,
+              email: user.email,
+            },
+          },
+        ],
+      });
     } else {
       Alert.alert("Login Failed", response.message ?? "Invalid credentials.");
     }

@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const BASE_URL =
-  "https://tumidly-vibraculoid-dena.ngrok-free.dev/workout-tracker-api/";
+  "https://tumidly-vibraculoid-dena.ngrok-free.dev/workout-tracker-api";
 
 export interface RegisterPayload {
   first_name: string;
@@ -47,9 +47,14 @@ export async function loginUser(email: string, password: string) {
 }
 
 export interface DayStat {
-  label: string;           // "Mon", "Tue", ...
-  workoutMinutes: number;  // total minutes for that day
-  calories: number;        // total calories for that day
+  label: string;
+  workoutMinutes: number;
+  calories: number;
+}
+
+export interface MonthlyStat {
+  label: string;
+  totalSets: number;  // total sets that month
 }
 
 export interface HomeScreenData {
@@ -69,6 +74,7 @@ export interface HomeScreenData {
     avgCalories: number;
   };
   dailyStats: DayStat[];
+  monthlyStats: MonthlyStat[]; 
 }
 
 export async function fetchHomeScreenData(
