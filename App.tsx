@@ -38,9 +38,9 @@ const HomeScreenWithFooter = ({ route, navigation }: any) => (
   </ScreenWrapper>
 );
 
-const CalorieScreenWithFooter = ({ route, navigation }: any) => (
+const CalorieScreenWithFooter = () => (
   <ScreenWrapper showFooter={true}>
-    <CalorieScreen route={route} navigation={navigation} />
+    <CalorieScreen />
   </ScreenWrapper>
 );
 
