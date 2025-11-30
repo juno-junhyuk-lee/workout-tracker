@@ -22,6 +22,7 @@ import {
   deletePerformedExercise,
   deleteWorkout,
 } from '../services/api';
+import { useAuth } from "../context/AuthContext";
 
 interface Exercise {
   Exercises_ID: number;
@@ -51,7 +52,8 @@ interface Workout {
 }
 
 export default function WorkoutScreen({ route }: any) {
-  const currentUserId = route?.params?.userId || 1;
+  const { user } = useAuth();
+  const currentUserId = user?.id ?? 0;
 
   const [activeTab, setActiveTab] = useState<'today' | 'history'>('today');
   const [todaysWorkout, setTodaysWorkout] = useState<Workout | null>(null);
@@ -76,16 +78,25 @@ export default function WorkoutScreen({ route }: any) {
   }, [activeTab, currentUserId]);
 
   const loadData = async () => {
-    setLoading(true);
-    if (activeTab === 'today') {
-      const workout = await getTodaysWorkout(currentUserId, todayDate);
-      setTodaysWorkout(workout);
-    } else {
-      const history = await getWorkoutHistory(currentUserId);
-      setWorkoutHistory(history);
+    if (!currentUserId) {
+      console.log("No currentUserId in WorkoutScreen, skipping loadData");
+      return;
     }
-    setLoading(false);
+
+    setLoading(true);
+    try {
+      if (activeTab === 'today') {
+        const workout = await getTodaysWorkout(currentUserId, todayDate);
+        setTodaysWorkout(workout);
+      } else {
+        const history = await getWorkoutHistory(currentUserId);
+        setWorkoutHistory(history);
+      }
+    } finally {
+      setLoading(false);
+    }
   };
+
 
   const toggleWorkoutExpanded = (workoutId: number) => {
     setExpandedWorkouts((prev: Set<number>) => {
