@@ -1,7 +1,6 @@
 import axios from "axios";
 
-const BASE_URL =
-  "https://sulfitic-hypermetaphoric-legend.ngrok-free.dev/workout-tracker-api";
+const BASE_URL ="https://minerva-unweakening-meteorically.ngrok-free.dev/workout-tracker-api";
 
 export interface RegisterPayload {
   first_name: string;
@@ -264,3 +263,203 @@ export async function fetchHomeScreenData(
   const data = (await res.json()) as HomeScreenData;
   return data;
 }
+
+
+//Get Foods 
+export async function getFoods() {
+  try {
+    const response = await fetch(`${BASE_URL}/get_foods.php`);
+    const data = await response.json();
+    if (data.status === 'success') {
+      return data.foods || [];
+    }
+    return [];
+  } catch (error) {
+    console.error("Error getting all Foods", error);
+    return [];
+  }
+}
+
+// Get Food Log for a user
+export async function getFoodLog(usersId: number) {
+  try {
+    const response = await fetch(`${BASE_URL}/get_food_log.php?Users_ID=${usersId}`);
+    const data = await response.json();
+    if (data.status === 'success') {
+      return data.foodLog || [];
+    }
+    return [];
+  } catch (error) {
+    console.error("Error getting food log", error);
+    return [];
+  }
+}
+
+// Insert a new food item
+export async function insertFood(foodsName: string, caloriesPerServing: number, foodsCategory?: string) {
+  try {
+    const formData = new FormData();
+    formData.append('Foods_Name', foodsName);
+    formData.append('Calories_Per_Serving', caloriesPerServing.toString());
+    if (foodsCategory) formData.append('Foods_Category', foodsCategory);
+
+    const response = await fetch(`${BASE_URL}/insert_foods.php`, {
+      method: 'POST',
+      body: formData,
+    });
+    const data = await response.json();
+    return data.status === 'success';
+  } catch (error) {
+    console.error("Error inserting food", error);
+    return false;
+  }
+}
+
+// Insert a food log entry
+export async function insertFoodLog(usersId: number, foodsId: number, foodLogDate: string, servingQuantity: number, mealType: string) {
+  try {
+    const formData = new FormData();
+    formData.append('Users_ID', usersId.toString());
+    formData.append('Foods_ID', foodsId.toString());
+    formData.append('FoodLog_Date', foodLogDate);
+    formData.append('Serving_Quantity', servingQuantity.toString());
+    formData.append('Meal_Type', mealType);
+
+    const response = await fetch(`${BASE_URL}/insert_food_log.php`, {
+      method: 'POST',
+      body: formData,
+    });
+    const data = await response.json();
+    return data.status === 'success';
+  } catch (error) {
+    console.error("Error inserting food log", error);
+    return false;
+  }
+}
+
+// Delete a food item
+export async function deleteFood(foodsId: number) {
+  try {
+    const formData = new FormData();
+    formData.append('Foods_ID', foodsId.toString());
+
+    const response = await fetch(`${BASE_URL}/delete_foods.php`, {
+      method: 'POST',
+      body: formData,
+    });
+    const data = await response.json();
+    return data.status === 'success';
+  } catch (error) {
+    console.error("Error deleting food", error);
+    return false;
+  }
+}
+
+// Delete a food log entry
+export async function deleteFoodLog(foodLogId: number) {
+  try {
+    const formData = new FormData();
+    formData.append('FoodLog_ID', foodLogId.toString());
+
+    const response = await fetch(`${BASE_URL}/delete_food_log.php`, {
+      method: 'POST',
+      body: formData,
+    });
+    const data = await response.json();
+    return data.status === 'success';
+  } catch (error) {
+    console.error("Error deleting food log", error);
+    return false;
+  }
+}
+
+// Update a food item
+export async function updateFood(foodsId: number, foodsName: string, caloriesPerServing: number, foodsCategory?: string) {
+  try {
+    const formData = new FormData();
+    formData.append('Foods_ID', foodsId.toString());
+    formData.append('Foods_Name', foodsName);
+    formData.append('Calories_Per_Serving', caloriesPerServing.toString());
+    if (foodsCategory) formData.append('Foods_Category', foodsCategory);
+
+    const response = await fetch(`${BASE_URL}/update_foods.php`, {
+      method: 'POST',
+      body: formData,
+    });
+    const data = await response.json();
+    return data.status === 'success';
+  } catch (error) {
+    console.error("Error updating food", error);
+    return false;
+  }
+}
+
+// Update a food log entry
+export async function updateFoodLog(foodLogId: number, usersId: number, foodsId: number, foodLogDate: string, servingQuantity: number) {
+  try {
+    const formData = new FormData();
+    formData.append('FoodLog_ID', foodLogId.toString());
+    formData.append('Users_ID', usersId.toString());
+    formData.append('Foods_ID', foodsId.toString());
+    formData.append('FoodLog_Date', foodLogDate);
+    formData.append('Serving_Quantity', servingQuantity.toString());
+
+    const response = await fetch(`${BASE_URL}/update_food_log.php`, {
+      method: 'POST',
+      body: formData,
+    });
+    const data = await response.json();
+    return data.status === 'success';
+  } catch (error) {
+    console.error("Error updating food log", error);
+    return false;
+  }
+}
+
+// Get calorie goals for a user
+export async function getCalorieGoals(userId: number) {
+  try {
+    const response = await fetch(`${BASE_URL}/get_calorie_goals.php?userId=${userId}`);
+    if (!response.ok) return null;
+    const data = await response.json();
+    return data.status === 'success' ? data.data : null;
+  } catch {
+    return null;
+  }
+}
+
+// Update calorie goals for a user (insert or update)
+// null values mean the meal is disabled
+export async function updateCalorieGoals(
+  userId: number, 
+  dailyGoal: number, 
+  breakfast: number | null, 
+  lunch: number | null, 
+  dinner: number | null,
+  snacks: number | null
+) {
+  try {
+    const formData = new FormData();
+    formData.append('userId', userId.toString());
+    formData.append('dailyGoal', dailyGoal.toString());
+    formData.append('breakfast', breakfast?.toString() ?? '');
+    formData.append('lunch', lunch?.toString() ?? '');
+    formData.append('dinner', dinner?.toString() ?? '');
+    formData.append('snacks', snacks?.toString() ?? '');
+
+    const response = await fetch(`${BASE_URL}/update_calorie_goals.php`, {
+      method: 'POST',
+      body: formData,
+    });
+    const data = await response.json();
+    return data.status === 'success';
+  } catch (error) {
+    console.error("Error updating calorie goals", error);
+    return false;
+  }
+}
+
+
+
+
+
