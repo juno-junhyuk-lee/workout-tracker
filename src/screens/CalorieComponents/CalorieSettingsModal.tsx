@@ -63,13 +63,13 @@ export function CalorieSettingsModal({
   }, [isOpen, currentGoals]);
 
   const handleSave = () => {
-    // Validation: at least one meal must be enabled
+    //at least one meal must be enabled
     if (!breakfastEnabled && !lunchEnabled && !dinnerEnabled && !snacksEnabled) {
-      return; // Don't save - button should be disabled anyway
+      return; 
     }
-    // Validation: meal totals must match daily goal
+    //meal totals must match daily goal
     if (mealTotal !== parseInt(dailyGoal)) {
-      return; // Don't save - button should be disabled anyway
+      return; 
     }
     
     // If disabled, save as null (or 0)

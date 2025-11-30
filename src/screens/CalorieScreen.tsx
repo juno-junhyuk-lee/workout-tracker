@@ -78,7 +78,7 @@ export function CalorieTracker() {
     }
   }, [selectedFoodLog]);
 
-  // Refresh total calories from database using GetDailyCalories SQL function
+  // Refresh total calories from database
   const refreshTotalCalories = async () => {
     if (!currentUserId) return;
     try {
@@ -105,7 +105,7 @@ export function CalorieTracker() {
         item.FoodLog_Date === today
       );
       
-      //FallBack
+      //FallBack for calcations for total calories 
       const calculatedCalories = todayLog.reduce((sum: number, item: FoodLogItem) => 
         sum + (item.Calories_Per_Serving * item.Serving_Quantity), 0
       );
@@ -118,7 +118,6 @@ export function CalorieTracker() {
         setTotalCalories(calculatedCalories);
       }
       
-      // Organize foods into dictionary by meal type
       const organized: MealFoodsMap = {
         Breakfast: [],
         Lunch: [],
@@ -126,7 +125,7 @@ export function CalorieTracker() {
         Snacks: [],
       };
       todayLog.forEach((item: FoodLogItem) => {
-        const mealType = item.Meal_Type || 'Snacks'; // Default to Snacks if no meal type
+        const mealType = item.Meal_Type || 'Snacks';
         if (organized[mealType]) {
           organized[mealType].push(item);
         } else {

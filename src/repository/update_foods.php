@@ -4,10 +4,6 @@ require "utils.php";
 allow_cors();
 
 /*
-Required fields:
-- Foods_ID
-- Foods_Name
-- Calories_Per_Serving
 Optional:
 - Foods_Category
 */

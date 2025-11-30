@@ -3,14 +3,7 @@ require "config.php";
 require "utils.php";
 allow_cors();
 
-/*
-Required fields:
-- FoodLog_ID
-- Users_ID
-- Foods_ID
-- FoodLog_Date
-- Serving_Quantity
-*/
+
 
 $FoodLog_ID = $_POST['FoodLog_ID'] ?? null;
 $Users_ID = $_POST['Users_ID'] ?? null;
