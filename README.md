@@ -59,9 +59,57 @@ ON DELETE CASCADE
 ON UPDATE CASCADE;
 ```
 
+
+
 This is required for signup to work.
 
-## 4. Start ngrok Tunnel
+## 4. Enable AUTO_INCREMENT for Workout Tables
+
+Run these SQL commands in phpMyAdmin → SQL to enable workout functionality:
+
+```sql
+-- 1. Fix Workouts Table
+
+-- Drop foreign key temporarily
+ALTER TABLE PerformedExercises
+DROP FOREIGN KEY performedexercises_ibfk_1;
+
+-- Add AUTO_INCREMENT to primary key
+ALTER TABLE Workouts
+MODIFY Workouts_ID INT NOT NULL AUTO_INCREMENT;
+
+-- Restore foreign key
+ALTER TABLE PerformedExercises
+ADD CONSTRAINT performedexercises_ibfk_1 
+FOREIGN KEY (Workouts_ID) 
+REFERENCES Workouts (Workouts_ID);
+
+-- 2. Fix PerformedExercises Table
+
+-- Drop foreign key temporarily
+ALTER TABLE sets
+DROP FOREIGN KEY sets_ibfk_1;
+
+-- Add AUTO_INCREMENT to primary key
+ALTER TABLE PerformedExercises
+MODIFY PerformedExercises_ID INT NOT NULL AUTO_INCREMENT;
+
+-- Restore foreign key
+ALTER TABLE sets
+ADD CONSTRAINT sets_ibfk_1 
+FOREIGN KEY (PerformedExercises_ID) 
+REFERENCES PerformedExercises (PerformedExercises_ID);
+
+-- 3. Fix Sets Table
+
+-- Add AUTO_INCREMENT to primary key
+ALTER TABLE sets
+MODIFY Sets_ID INT NOT NULL AUTO_INCREMENT;
+```
+
+This is required for workout creation to work properly.
+
+## 5. Start ngrok Tunnel
 
 Your mobile device cannot reach localhost, so tunnel port 80:
 
@@ -171,57 +219,3 @@ git push origin feature/login
 Create a Pull Request on GitHub.
 
 
-===================================
-
-
-# UPDATE FOR WORKOUT FUNCTIONALITY
-
-## Database Setup
-
-### Required SQL Modifications
-Before running the application, execute the following SQL commands to enable `AUTO_INCREMENT` on primary keys.
-
----
-
-```sql
--- 1. Fix Workouts Table
-
--- Drop foreign key temporarily
-ALTER TABLE PerformedExercises
-DROP FOREIGN KEY performedexercises_ibfk_1;
-
--- Add AUTO_INCREMENT to primary key
-ALTER TABLE Workouts
-MODIFY Workouts_ID INT NOT NULL AUTO_INCREMENT;
-
--- Restore foreign key
-ALTER TABLE PerformedExercises
-ADD CONSTRAINT performedexercises_ibfk_1 
-FOREIGN KEY (Workouts_ID) 
-REFERENCES Workouts (Workouts_ID);
-
--- 2. Fix PerformedExercises Table
-
--- Drop foreign key temporarily
-
-ALTER TABLE sets
-DROP FOREIGN KEY sets_ibfk_1;
-
--- Add AUTO_INCREMENT to primary key
-
-ALTER TABLE PerformedExercises
-MODIFY PerformedExercises_ID INT NOT NULL AUTO_INCREMENT;
-
--- Restore foreign key
-
-ALTER TABLE sets
-ADD CONSTRAINT sets_ibfk_1 
-FOREIGN KEY (PerformedExercises_ID) 
-REFERENCES PerformedExercises (PerformedExercises_ID);
-
--- 3. Fix Sets Table
-
--- Add AUTO_INCREMENT to primary key
-
-ALTER TABLE sets
-MODIFY Sets_ID INT NOT NULL AUTO_INCREMENT;
