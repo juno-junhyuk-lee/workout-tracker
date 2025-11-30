@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const BASE_URL =
-  "https://tumidly-vibraculoid-dena.ngrok-free.dev/workout-tracker-api";
+  "https://holocrine-shantae-prestricken.ngrok-free.dev/workout-tracker-api";
 
 export interface RegisterPayload {
   first_name: string;
@@ -51,22 +51,26 @@ export async function getExercises() {
   try {
     const response = await fetch(`${BASE_URL}/get_exercises.php`);
     const data = await response.json();
-    if (data.status === 'success') {
+    if (data.status === "success") {
       return data.exercises || [];
     }
-    throw new Error(data.message || 'Failed to fetch exercises');
+    throw new Error(data.message || "Failed to fetch exercises");
   } catch (error) {
-    console.error('Error fetching exercises:', error);
+    console.error("Error fetching exercises:", error);
     return [];
   }
 }
 
 // POST create new workout
-export async function createWorkout(usersId: number, workoutsName: string, workoutsDate: string) {
+export async function createWorkout(
+  usersId: number,
+  workoutsName: string,
+  workoutsDate: string
+) {
   try {
     const response = await fetch(`${BASE_URL}/create_workout.php`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         users_id: usersId,
         workouts_name: workoutsName,
@@ -74,44 +78,51 @@ export async function createWorkout(usersId: number, workoutsName: string, worko
       }),
     });
     const data = await response.json();
-    if (data.status === 'success') {
+    if (data.status === "success") {
       return data.workouts_id;
     }
-    throw new Error(data.message || 'Failed to create workout');
+    throw new Error(data.message || "Failed to create workout");
   } catch (error) {
-    console.error('Error creating workout:', error);
+    console.error("Error creating workout:", error);
     return null;
   }
 }
 
 // POST add exercise to workout
-export async function addPerformedExercise(workoutsId: number, exercisesId: number) {
+export async function addPerformedExercise(
+  workoutsId: number,
+  exercisesId: number
+) {
   try {
     const response = await fetch(`${BASE_URL}/add_performed_exercise.php`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         workouts_id: workoutsId,
         exercises_id: exercisesId,
       }),
     });
     const data = await response.json();
-    if (data.status === 'success') {
+    if (data.status === "success") {
       return data.performedexercises_id;
     }
-    throw new Error(data.message || 'Failed to add exercise');
+    throw new Error(data.message || "Failed to add exercise");
   } catch (error) {
-    console.error('Error adding exercise:', error);
+    console.error("Error adding exercise:", error);
     return null;
   }
 }
 
 // POST add set to performed exercise
-export async function addSet(performedExercisesId: number, weight: number, reps: number) {
+export async function addSet(
+  performedExercisesId: number,
+  weight: number,
+  reps: number
+) {
   try {
     const response = await fetch(`${BASE_URL}/add_set.php`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         performedexercises_id: performedExercisesId,
         sets_weight: weight,
@@ -119,9 +130,9 @@ export async function addSet(performedExercisesId: number, weight: number, reps:
       }),
     });
     const data = await response.json();
-    return data.status === 'success';
+    return data.status === "success";
   } catch (error) {
-    console.error('Error adding set:', error);
+    console.error("Error adding set:", error);
     return false;
   }
 }
@@ -133,12 +144,12 @@ export async function getTodaysWorkout(usersId: number, date: string) {
       `${BASE_URL}/get_workout_details.php?users_id=${usersId}&date=${date}`
     );
     const data = await response.json();
-    if (data.status === 'success') {
+    if (data.status === "success") {
       return data.workout || null;
     }
     return null;
   } catch (error) {
-    console.error('Error fetching workout:', error);
+    console.error("Error fetching workout:", error);
     return null;
   }
 }
@@ -150,12 +161,12 @@ export async function getWorkoutHistory(usersId: number) {
       `${BASE_URL}/get_workout_history.php?users_id=${usersId}`
     );
     const data = await response.json();
-    if (data.status === 'success') {
+    if (data.status === "success") {
       return data.workouts || [];
     }
     return [];
   } catch (error) {
-    console.error('Error fetching history:', error);
+    console.error("Error fetching history:", error);
     return [];
   }
 }
@@ -164,16 +175,16 @@ export async function getWorkoutHistory(usersId: number) {
 export async function deleteSet(setsId: number) {
   try {
     const response = await fetch(`${BASE_URL}/delete_set.php`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         sets_id: setsId,
       }),
     });
     const data = await response.json();
-    return data.status === 'success';
+    return data.status === "success";
   } catch (error) {
-    console.error('Error deleting set:', error);
+    console.error("Error deleting set:", error);
     return false;
   }
 }
@@ -182,16 +193,16 @@ export async function deleteSet(setsId: number) {
 export async function deletePerformedExercise(performedExercisesId: number) {
   try {
     const response = await fetch(`${BASE_URL}/delete_performed_exercise.php`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         performedexercises_id: performedExercisesId,
       }),
     });
     const data = await response.json();
-    return data.status === 'success';
+    return data.status === "success";
   } catch (error) {
-    console.error('Error deleting performed exercise:', error);
+    console.error("Error deleting performed exercise:", error);
     return false;
   }
 }
@@ -200,16 +211,16 @@ export async function deletePerformedExercise(performedExercisesId: number) {
 export async function deleteWorkout(workoutsId: number) {
   try {
     const response = await fetch(`${BASE_URL}/delete_workout.php`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         workouts_id: workoutsId,
       }),
     });
     const data = await response.json();
-    return data.status === 'success';
+    return data.status === "success";
   } catch (error) {
-    console.error('Error deleting workout:', error);
+    console.error("Error deleting workout:", error);
     return false;
   }
 }
@@ -242,7 +253,7 @@ export interface HomeScreenData {
     avgCalories: number;
   };
   dailyStats: DayStat[];
-  monthlyStats: MonthlyStat[]; 
+  monthlyStats: MonthlyStat[];
 }
 
 export async function fetchHomeScreenData(
@@ -263,4 +274,46 @@ export async function fetchHomeScreenData(
 
   const data = (await res.json()) as HomeScreenData;
   return data;
+}
+
+export async function updateUserInfo(payload: {
+  user_id: number;
+  first_name?: string | null;
+  last_name?: string | null;
+  email?: string | null;
+  username?: string | null;
+  age?: number | null;
+  gender?: string | null;
+}) {
+  const res = await fetch(`${BASE_URL}/update_user.php`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  return res.json();
+}
+
+export async function changeEmail(userId: number, newEmail: string) {
+  try {
+    const res = await axios.post(`${BASE_URL}/change_email.php`, {
+      user_id: userId,
+      email: newEmail,
+    });
+
+    return res.data;
+  } catch (err) {
+    console.error("Change email error:", err);
+    return { status: "error", message: "Server error" };
+  }
+}
+
+export async function changeUsername(userId: number, username: string) {
+  const res = await fetch(`${BASE_URL}/change_username.php`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ user_id: userId, username }),
+  });
+
+  return res.json();
 }
