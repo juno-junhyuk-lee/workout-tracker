@@ -1,33 +1,67 @@
 import { useState, useEffect } from 'react';
 import { ScrollView, View, TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { CalorieProgress } from './CalorieComponents/CalorieProgress';
-import { MacroCard } from './CalorieComponents/MacroCard';
 import { MealSection } from './CalorieComponents/MealSection';
 import { AddFoodModal } from './CalorieComponents/AddFoodModal';
 import { FoodDetailModal } from './CalorieComponents/FoodDetailModal';
-import { getFoods, getFoodLog, insertFoodLog, deleteFoodLog } from '../services/api';
+import { CalorieSettingsModal } from './CalorieComponents/CalorieSettingsModal';
+import { getFoods, getFoodLog, insertFoodLog, deleteFoodLog, updateFoodLog, getCalorieGoals, updateCalorieGoals } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import type { FoodDatabaseItem, FoodLogItem, MacroData } from '../types';
 
-
-// TODO: Get this from user context/auth
-const CURRENT_USER_ID = 1;
+// Calorie goals type
+interface CalorieGoals {
+  userId: number;
+  dailyGoal: number;
+  breakfast: number | null;
+  lunch: number | null;
+  dinner: number | null;
+  snacks: number | null;
+}
 
 export function CalorieTracker() {
+  const { user } = useAuth();
+  const currentUserId = user?.id ?? 0;
+
+  // Default goals
+  const DEFAULT_GOALS: CalorieGoals = {
+    userId: currentUserId,
+    dailyGoal: 2000,
+    breakfast: 600,
+    lunch: 600,
+    dinner: 600,
+    snacks: 200,
+  };
+
+  // Dictionary mapping meal type to list of foods
+  type MealFoodsMap = Record<string, FoodLogItem[]>;
+
   const [isAddFoodModalOpen, setIsAddFoodModalOpen] = useState(false);
   const [isFoodDetailModalOpen, setIsFoodDetailModalOpen] = useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [selectedMealType, setSelectedMealType] = useState<string>('');
   const [selectedFood, setSelectedFood] = useState<FoodDatabaseItem | null>(null);
-  const [foodLog, setFoodLog] = useState<FoodLogItem[]>([]);
+  const [selectedFoodLog, setSelectedFoodLog] = useState<FoodLogItem | null>(null);
   const [foods, setFoods] = useState<FoodDatabaseItem[]>([]);
+  const [calorieGoals, setCalorieGoals] = useState<CalorieGoals>(DEFAULT_GOALS);
   const [loading, setLoading] = useState(true);
+  
+  // Dictionary: { "Breakfast": [...foods], "Lunch": [...foods], etc. }
+  const [mealFoods, setMealFoods] = useState<MealFoodsMap>({
+    Breakfast: [],
+    Lunch: [],
+    Dinner: [],
+    Snacks: [],
+  });
 
   const today = new Date().toISOString().split('T')[0];
 
-  // Fetch foods and food log on mount
+  // Fetch foods and food log on mount or when user changes
   useEffect(() => {
     loadData();
-  }, []);
+  }, [currentUserId]);
 
   // Open FoodDetailModal when a food is selected
   useEffect(() => {
@@ -36,19 +70,46 @@ export function CalorieTracker() {
     }
   }, [selectedFood]);
 
+  // Open FoodDetailModal when editing a food log
+  useEffect(() => {
+    if (selectedFoodLog) {
+      setIsFoodDetailModalOpen(true);
+    }
+  }, [selectedFoodLog]);
+
   const loadData = async () => {
+    if (!currentUserId) return;
     setLoading(true);
     try {
-      const [foodsData, foodLogData] = await Promise.all([
+      const [foodsData, foodLogData, goalsData] = await Promise.all([
         getFoods(),
-        getFoodLog(CURRENT_USER_ID)
+        getFoodLog(currentUserId),
+        getCalorieGoals(currentUserId)
       ]);
       setFoods(foodsData);
-      // Filter food log for today
+      // Filter food log for today and organize by meal
       const todayLog = foodLogData.filter((item: FoodLogItem) => 
         item.FoodLog_Date === today
       );
-      setFoodLog(todayLog);
+      // Organize foods into dictionary by meal type
+      const organized: MealFoodsMap = {
+        Breakfast: [],
+        Lunch: [],
+        Dinner: [],
+        Snacks: [],
+      };
+      todayLog.forEach((item: FoodLogItem) => {
+        const mealType = item.Meal_Type || 'Snacks'; // Default to Snacks if no meal type
+        if (organized[mealType]) {
+          organized[mealType].push(item);
+        } else {
+          organized.Snacks.push(item);
+        }
+      });
+      setMealFoods(organized);
+      if (goalsData) {
+        setCalorieGoals(goalsData);
+      }
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -56,12 +117,10 @@ export function CalorieTracker() {
     }
   };
 
-  // Calculate totals from food log
-  const totalCalories = foodLog.reduce((sum, item) => 
+  // Calculate totals from all meal food logs
+  const totalCalories = Object.values(mealFoods).flat().reduce((sum: number, item: FoodLogItem) => 
     sum + (item.Calories_Per_Serving * item.Serving_Quantity), 0
   );
-
-  const calorieGoal = 2200; //TODO: Get From user settings 
 
   const macros: MacroData[] = [
     { label: 'Protein', current: 0, goal: 165, unit: 'g', color: '#ff6b6b' },
@@ -69,13 +128,20 @@ export function CalorieTracker() {
     { label: 'Fat', current: 0, goal: 73, unit: 'g', color: '#ffd93d' },
   ];
 
-  //Todo: Add groupings depednant on settings
-  const meals = [
-    { mealName: 'Breakfast', targetCalories: 550, foods: foodLog },
-    { mealName: 'Lunch', targetCalories: 700, foods: [] as FoodLogItem[] },
-    { mealName: 'Dinner', targetCalories: 700, foods: [] as FoodLogItem[] },
-    { mealName: 'Snacks', targetCalories: 250, foods: [] as FoodLogItem[] },
+  // Use goals from database for meal targets (null == disabled)
+  // Get foods from dictionary
+  const allMeals = [
+    { mealName: 'Breakfast', targetCalories: calorieGoals.breakfast ?? 0, foods: mealFoods.Breakfast },
+    { mealName: 'Lunch', targetCalories: calorieGoals.lunch ?? 0, foods: mealFoods.Lunch },
+    { mealName: 'Dinner', targetCalories: calorieGoals.dinner ?? 0, foods: mealFoods.Dinner },
+    { mealName: 'Snacks', targetCalories: calorieGoals.snacks ?? 0, foods: mealFoods.Snacks },
   ];
+  
+  // Only show meals that have a goal
+  const meals = allMeals.filter((meal, index) => {
+    const goalValues = [calorieGoals.breakfast, calorieGoals.lunch, calorieGoals.dinner, calorieGoals.snacks];
+    return goalValues[index] != null && goalValues[index]! > 0;
+  });
 
   const handleOpenAddFood = (mealIndex: number) => {
     setSelectedMealType(meals[mealIndex].mealName);
@@ -90,10 +156,11 @@ export function CalorieTracker() {
   const handleAddFood = async (food: FoodDatabaseItem, servings: number) => {
     try {
       const success = await insertFoodLog(
-        CURRENT_USER_ID,
+        currentUserId,
         food.Foods_ID,
         today,
-        servings
+        servings,
+        selectedMealType // Pass the meal type
       );
       if (success) {
         // Reload food log
@@ -112,6 +179,7 @@ export function CalorieTracker() {
   const handleCloseFoodDetail = () => {
     setIsFoodDetailModalOpen(false);
     setSelectedFood(null);
+    setSelectedFoodLog(null);
   };
 
   const handleDeleteFood = async (foodLogId: number) => {
@@ -123,6 +191,50 @@ export function CalorieTracker() {
     } catch (error) {
       console.error('Error deleting food:', error);
     }
+    setIsFoodDetailModalOpen(false);
+    setSelectedFoodLog(null);
+  };
+
+  const handleEditFood = (foodLogItem: FoodLogItem) => {
+    setSelectedFoodLog(foodLogItem);
+  };
+
+  const handleUpdateFoodLog = async (foodLogItem: FoodLogItem, newServings: number) => {
+    try {
+      const success = await updateFoodLog(
+        foodLogItem.FoodLog_ID,
+        currentUserId,
+        foodLogItem.Foods_ID,
+        foodLogItem.FoodLog_Date,
+        newServings
+      );
+      if (success) {
+        await loadData();
+      }
+    } catch (error) {
+      console.error('Error updating food log:', error);
+    }
+    setIsFoodDetailModalOpen(false);
+    setSelectedFoodLog(null);
+  };
+
+  const handleSaveSettings = async (goals: CalorieGoals) => {
+    try {
+      const success = await updateCalorieGoals(
+        goals.userId,
+        goals.dailyGoal,
+        goals.breakfast,
+        goals.lunch,
+        goals.dinner,
+        goals.snacks
+      );
+      if (success) {
+        setCalorieGoals(goals);
+      }
+    } catch (error) {
+      console.error('Error saving settings:', error);
+    }
+    setIsSettingsModalOpen(false);
   };
 
   if (loading) {
@@ -141,13 +253,21 @@ export function CalorieTracker() {
         
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Calories</Text>
-          <Text style={styles.subtitle}>Sunday, October 12</Text>
+          <View>
+            <Text style={styles.title}>Calories</Text>
+            <Text style={styles.subtitle}>Sunday, October 12</Text>
+          </View>
+          <TouchableOpacity 
+            style={styles.settingsButton}
+            onPress={() => setIsSettingsModalOpen(true)}
+          >
+            <Ionicons name="settings-outline" size={24} color="#007AFF" />
+          </TouchableOpacity>
         </View>
 
         {/* Progress Card */}
         <View style={styles.progressCard}>
-          <CalorieProgress consumed={totalCalories} goal={calorieGoal} />
+          <CalorieProgress consumed={totalCalories} goal={calorieGoals.dailyGoal} />
         </View>
 
         <View style={styles.mealsSection}>
@@ -159,6 +279,8 @@ export function CalorieTracker() {
               targetCalories={meal.targetCalories}
               foods={meal.foods}
               onAddClick={() => handleOpenAddFood(index)}
+              onDeleteFood={handleDeleteFood}
+              onEditFood={handleEditFood}
             />
           ))}
         </View>
@@ -177,7 +299,17 @@ export function CalorieTracker() {
         isOpen={isFoodDetailModalOpen}
         onClose={handleCloseFoodDetail}
         onAdd={handleAddFood}
+        onUpdate={handleUpdateFoodLog}
+        onDelete={handleDeleteFood}
         food={selectedFood}
+        foodLogItem={selectedFoodLog}
+      />
+
+      <CalorieSettingsModal
+        isOpen={isSettingsModalOpen}
+        onClose={() => setIsSettingsModalOpen(false)}
+        onSave={handleSaveSettings}
+        currentGoals={calorieGoals}
       />
 
     </SafeAreaView>
@@ -203,7 +335,13 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
     marginBottom: 24,
+  },
+  settingsButton: {
+    padding: 8,
   },
   title: {
     fontSize: 32,

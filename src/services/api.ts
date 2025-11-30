@@ -316,13 +316,14 @@ export async function insertFood(foodsName: string, caloriesPerServing: number, 
 }
 
 // Insert a food log entry
-export async function insertFoodLog(usersId: number, foodsId: number, foodLogDate: string, servingQuantity: number) {
+export async function insertFoodLog(usersId: number, foodsId: number, foodLogDate: string, servingQuantity: number, mealType: string) {
   try {
     const formData = new FormData();
     formData.append('Users_ID', usersId.toString());
     formData.append('Foods_ID', foodsId.toString());
     formData.append('FoodLog_Date', foodLogDate);
     formData.append('Serving_Quantity', servingQuantity.toString());
+    formData.append('Meal_Type', mealType);
 
     const response = await fetch(`${BASE_URL}/insert_food_log.php`, {
       method: 'POST',
@@ -411,6 +412,49 @@ export async function updateFoodLog(foodLogId: number, usersId: number, foodsId:
     return data.status === 'success';
   } catch (error) {
     console.error("Error updating food log", error);
+    return false;
+  }
+}
+
+// Get calorie goals for a user
+export async function getCalorieGoals(userId: number) {
+  try {
+    const response = await fetch(`${BASE_URL}/get_calorie_goals.php?userId=${userId}`);
+    if (!response.ok) return null;
+    const data = await response.json();
+    return data.status === 'success' ? data.data : null;
+  } catch {
+    return null;
+  }
+}
+
+// Update calorie goals for a user (insert or update)
+// null values mean the meal is disabled
+export async function updateCalorieGoals(
+  userId: number, 
+  dailyGoal: number, 
+  breakfast: number | null, 
+  lunch: number | null, 
+  dinner: number | null,
+  snacks: number | null
+) {
+  try {
+    const formData = new FormData();
+    formData.append('userId', userId.toString());
+    formData.append('dailyGoal', dailyGoal.toString());
+    formData.append('breakfast', breakfast?.toString() ?? '');
+    formData.append('lunch', lunch?.toString() ?? '');
+    formData.append('dinner', dinner?.toString() ?? '');
+    formData.append('snacks', snacks?.toString() ?? '');
+
+    const response = await fetch(`${BASE_URL}/update_calorie_goals.php`, {
+      method: 'POST',
+      body: formData,
+    });
+    const data = await response.json();
+    return data.status === 'success';
+  } catch (error) {
+    console.error("Error updating calorie goals", error);
     return false;
   }
 }

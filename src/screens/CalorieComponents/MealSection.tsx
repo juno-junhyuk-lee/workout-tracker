@@ -8,9 +8,11 @@ interface MealSectionProps {
   targetCalories: number;
   foods: FoodLogItem[];
   onAddClick: () => void;
+  onDeleteFood?: (foodLogId: number) => void;
+  onEditFood?: (foodLogItem: FoodLogItem) => void;
 }
 
-export function MealSection({ mealName, targetCalories, foods, onAddClick }: MealSectionProps) {
+export function MealSection({ mealName, targetCalories, foods, onAddClick, onDeleteFood, onEditFood }: MealSectionProps) {
   const totalCalories = foods.reduce((sum, food) => sum + (food.Calories_Per_Serving * food.Serving_Quantity), 0);
 
   return (
@@ -43,7 +45,15 @@ export function MealSection({ mealName, targetCalories, foods, onAddClick }: Mea
                   {food.Serving_Quantity} serving(s){food.Foods_Category ? ` • ${food.Foods_Category}` : ''}
                 </Text>
               </View>
-              <Text style={styles.foodCalories}>{Math.round(food.Calories_Per_Serving * food.Serving_Quantity)}</Text>
+              <View style={styles.foodActions}>
+                <Text style={styles.foodCalories}>{Math.round(food.Calories_Per_Serving * food.Serving_Quantity)}</Text>
+                <TouchableOpacity 
+                  onPress={() => onEditFood?.(food)} 
+                  style={styles.actionButton}
+                >
+                  <Ionicons name="pencil" size={18} color="#007AFF" />
+                </TouchableOpacity>
+              </View>
             </View>
           ))}
         </View>
@@ -109,7 +119,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#f2f2f7',
   },
-  foodInfo: {},
+  foodInfo: {
+    flex: 1,
+  },
   foodName: {
     fontSize: 16,
     color: '#1d1d1f',
@@ -119,10 +131,24 @@ const styles = StyleSheet.create({
     color: '#6e6e73',
     marginTop: 2,
   },
+  foodActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   foodCalories: {
     fontSize: 16,
     fontWeight: '500',
     color: '#1d1d1f',
+    marginRight: 8,
+  },
+  actionButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#f5f5f7',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   emptyState: {
     backgroundColor: 'white',

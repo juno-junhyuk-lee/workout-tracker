@@ -13,6 +13,7 @@ export interface FoodLogItem {
   Foods_ID: number;
   FoodLog_Date: string;
   Serving_Quantity: number;
+  Meal_Type: string;
   Foods_Name: string;
   Calories_Per_Serving: number;
   Foods_Category: string; 
