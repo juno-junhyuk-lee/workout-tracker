@@ -51,6 +51,20 @@ interface Workout {
   exercise_count?: number;
 }
 
+const getTodayDateEST = (): string => {
+  // Create date string in EST timezone
+  const estDateString = new Date().toLocaleString('en-US', { 
+    timeZone: 'America/New_York',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+  
+  // Parse the format "MM/DD/YYYY" and convert to "YYYY-MM-DD"
+  const [month, day, year] = estDateString.split(/[\/,\s]+/);
+  return `${year}-${month}-${day}`;
+};
+
 export default function WorkoutScreen({ route }: any) {
   const { user } = useAuth();
   const currentUserId = user?.id ?? 0;
@@ -59,9 +73,7 @@ export default function WorkoutScreen({ route }: any) {
   const [todaysWorkout, setTodaysWorkout] = useState<Workout | null>(null);
   const [workoutHistory, setWorkoutHistory] = useState<Workout[]>([]);
   const [loading, setLoading] = useState(false);
-  const [expandedWorkouts, setExpandedWorkouts] = useState<Set<number>>(
-    new Set()
-  );
+  const [expandedWorkouts, setExpandedWorkouts] = useState(new Set<number>());
 
   // Modal states
   const [showExerciseModal, setShowExerciseModal] = useState(false);
@@ -69,13 +81,12 @@ export default function WorkoutScreen({ route }: any) {
 
   // Add set modal
   const [showAddSetModal, setShowAddSetModal] = useState(false);
-  const [currentPerformedExerciseId, setCurrentPerformedExerciseId] = useState<
-    number | null
-  >(null);
+  const [currentPerformedExerciseId, setCurrentPerformedExerciseId] = useState<number | null>(null);
   const [setWeight, setSetWeight] = useState("");
   const [setReps, setSetReps] = useState("");
 
-  const todayDate = new Date().toISOString().split("T")[0];
+  // Use EST timezone for today's date
+  const todayDate = getTodayDateEST();
 
   useEffect(() => {
     loadData();
@@ -114,7 +125,12 @@ export default function WorkoutScreen({ route }: any) {
   };
 
   const handleAddTodaysWorkout = async () => {
-    const workoutName = `Workout ${new Date().toLocaleDateString()}`;
+    // Format date for display using EST
+    const estDate = new Date(new Date().toLocaleString('en-US', { 
+      timeZone: 'America/New_York' 
+    }));
+    const workoutName = `Workout ${estDate.toLocaleDateString()}`;
+    
     const workoutId = await createWorkout(
       currentUserId,
       workoutName,
