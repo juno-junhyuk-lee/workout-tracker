@@ -458,8 +458,20 @@ export async function getCalorieGoals(userId: number) {
     );
     if (!response.ok) return null;
     const data = await response.json();
-    return data.status === "success" ? data.data : null;
-  } catch {
+    
+    if (data.status === "success") {
+      return {
+        userId: data.userId,
+        dailyGoal: data.dailyGoal,
+        breakfast: data.breakfast,
+        lunch: data.lunch,
+        dinner: data.dinner,
+        snacks: data.snacks,
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error("Error fetching calorie goals:", error);
     return null;
   }
 }
