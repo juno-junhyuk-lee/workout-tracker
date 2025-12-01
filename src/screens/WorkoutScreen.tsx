@@ -67,6 +67,10 @@ const getTodayDateEST = (): string => {
 
 export default function WorkoutScreen({ route }: any) {
   const { user } = useAuth();
+  if (!user) {
+    return <Text>Please log in to view workouts</Text>;
+  }
+
   const currentUserId = user?.id ?? 0;
 
   const [activeTab, setActiveTab] = useState<"today" | "history">("today");
