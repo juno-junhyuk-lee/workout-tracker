@@ -232,34 +232,6 @@ export default function AuthScreen({ navigation }: any) {
             >
               <Text style={styles.primaryButtonText}>Login</Text>
             </TouchableOpacity>
-
-            <View style={styles.skipSection}>
-              <Text style={styles.skipTitle}>Quick Navigation (Dev)</Text>
-              <View style={styles.skipButton}>
-                <Button
-                  title="→ Home"
-                  onPress={() => navigation.navigate("HomeScreen")}
-                />
-              </View>
-              <View style={styles.skipButton}>
-                <Button
-                  title="→ Workout"
-                  onPress={() => navigation.navigate("WorkoutScreen")}
-                />
-              </View>
-              <View style={styles.skipButton}>
-                <Button
-                  title="→ Calories"
-                  onPress={() => navigation.navigate("CalorieScreen")}
-                />
-              </View>
-              <View style={styles.skipButton}>
-                <Button
-                  title="→ Account"
-                  onPress={() => navigation.navigate("AccountScreen")}
-                />
-              </View>
-            </View>
           </View>
         )}
 
