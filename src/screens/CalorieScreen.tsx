@@ -269,7 +269,7 @@ export function CalorieTracker() {
         <View style={styles.header}>
           <View>
             <Text style={styles.title}>Calories</Text>
-            <Text style={styles.subtitle}>Sunday, October 12</Text>
+            <Text style={styles.subtitle}>{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</Text>
           </View>
           <TouchableOpacity 
             style={styles.settingsButton}

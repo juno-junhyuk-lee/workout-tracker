@@ -20,6 +20,7 @@ expo-env.d.ts
 
 # Local environment config
 src/services/config.js
+src/repository/db_config.php
 
 # Metro
 .metro-health-check*
