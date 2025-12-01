@@ -51,9 +51,9 @@ $sql = "SELECT
             w.Workouts_Date,
             COUNT(DISTINCT pe.PerformedExercises_ID) AS exercises,
             COUNT(s.Sets_ID) AS total_sets
-        FROM workouts w
-        LEFT JOIN performedexercises pe ON pe.Workouts_ID = w.Workouts_ID
-        LEFT JOIN sets s ON s.PerformedExercises_ID = pe.PerformedExercises_ID
+        FROM Workouts w
+        LEFT JOIN PerformedExercises pe ON pe.Workouts_ID = w.Workouts_ID
+        LEFT JOIN Sets s ON s.PerformedExercises_ID = pe.PerformedExercises_ID
         WHERE w.Users_ID = ? AND w.Workouts_Date BETWEEN ? AND ?
         GROUP BY w.Workouts_Date
         ORDER BY w.Workouts_Date ASC";
@@ -195,9 +195,9 @@ for ($ts = $monthTs; $ts <= $currentMonthTs; $ts = strtotime('+1 month', $ts)) {
 $sql = "SELECT 
             DATE_FORMAT(w.Workouts_Date, '%Y-%m') AS ym,
             COUNT(s.Sets_ID) AS total_sets
-        FROM workouts w
-        LEFT JOIN performedexercises pe ON pe.Workouts_ID = w.Workouts_ID
-        LEFT JOIN sets s ON s.PerformedExercises_ID = pe.PerformedExercises_ID
+        FROM Workouts w
+        LEFT JOIN PerformedExercises pe ON pe.Workouts_ID = w.Workouts_ID
+        LEFT JOIN Sets s ON s.PerformedExercises_ID = pe.PerformedExercises_ID
         WHERE w.Users_ID = ? AND w.Workouts_Date BETWEEN ? AND ?
         GROUP BY ym
         ORDER BY ym ASC";
