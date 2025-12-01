@@ -6,9 +6,9 @@ import {
   StyleSheet,
   TouchableOpacity,
   Button,
+  Alert,
 } from "react-native";
 import { registerUser, loginUser } from "../services/api";
-import { Alert } from "react-native";
 import { useAuth } from "../context/AuthContext";
 
 export default function AuthScreen({ navigation }: any) {
@@ -27,28 +27,120 @@ export default function AuthScreen({ navigation }: any) {
   const [age, setAge] = useState("");
   const [gender, setGender] = useState("");
 
+  // Email validation helper
+  const isValidEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  // Password validation helper
+  const isValidPassword = (
+    password: string
+  ): { valid: boolean; message?: string } => {
+    if (password.length < 8) {
+      return {
+        valid: false,
+        message: "Password must be at least 8 characters long",
+      };
+    }
+    if (!/[A-Z]/.test(password)) {
+      return {
+        valid: false,
+        message: "Password must contain at least one uppercase letter",
+      };
+    }
+    if (!/[a-z]/.test(password)) {
+      return {
+        valid: false,
+        message: "Password must contain at least one lowercase letter",
+      };
+    }
+    if (!/[0-9]/.test(password)) {
+      return {
+        valid: false,
+        message: "Password must contain at least one number",
+      };
+    }
+    return { valid: true };
+  };
+
+  const handleLogin = async () => {
+    // Trim whitespace
+    const email = loginEmail.trim();
+    const password = loginPassword.trim();
+
+    // Validate fields
+    if (!email || !password) {
+      Alert.alert("Error", "Please fill in all fields.");
+      return;
+    }
+
+    if (!isValidEmail(email)) {
+      Alert.alert("Invalid Email", "Please enter a valid email address.");
+      return;
+    }
+
+    // Proceed with login
+    const res = await loginUser(email, password);
+
+    if (res.status === "success") {
+      await login(res.user);
+      navigation.replace("MainTabs");
+    } else {
+      Alert.alert("Login Failed", res.message || "Invalid credentials");
+    }
+  };
+
   const handleSignup = async () => {
-    if (!firstName || !lastName || !signupEmail || !signupPassword) {
-      Alert.alert("Error", "Please fill all required fields.");
+    // Trim whitespace
+    const email = signupEmail.trim();
+    const password = signupPassword.trim();
+
+    // Validate required fields
+    if (!firstName.trim() || !lastName.trim() || !email || !password) {
+      Alert.alert("Error", "Please fill in all required fields.");
+      return;
+    }
+
+    // Validate email format
+    if (!isValidEmail(email)) {
+      Alert.alert("Invalid Email", "Please enter a valid email address.");
+      return;
+    }
+
+    // Validate password strength
+    const passwordCheck = isValidPassword(password);
+    if (!passwordCheck.valid) {
+      Alert.alert(
+        "Weak Password",
+        passwordCheck.message || "Password does not meet requirements"
+      );
+      return;
+    }
+
+    // Validate age if provided
+    if (age && (isNaN(Number(age)) || Number(age) < 13 || Number(age) > 120)) {
+      Alert.alert(
+        "Invalid Age",
+        "Please enter a valid age between 13 and 120."
+      );
       return;
     }
 
     const res = await registerUser({
-      first_name: firstName,
-      last_name: lastName,
-      email: signupEmail,
-      password: signupPassword,
+      first_name: firstName.trim(),
+      last_name: lastName.trim(),
+      email: email,
+      password: password,
       age: age ? Number(age) : null,
       gender: gender || null,
     });
 
     if (res.status === "success") {
-      Alert.alert("Success", `Account created!\nUsername: ${res.username}`);
-
-      // Optional: auto-switch to login tab
-      setActiveTab("login");
-
-      // Optional: clear form
+      Alert.alert("Success", "Account created! Please log in.", [
+        { text: "OK", onPress: () => setActiveTab("login") },
+      ]);
+      // Clear signup form
       setFirstName("");
       setLastName("");
       setSignupEmail("");
@@ -56,23 +148,7 @@ export default function AuthScreen({ navigation }: any) {
       setAge("");
       setGender("");
     } else {
-      Alert.alert("Signup Failed", res.message ?? "Unknown error");
-    }
-  };
-
-  const handleLogin = async () => {
-    if (!loginEmail || !loginPassword) {
-      Alert.alert("Error", "Please enter email and password.");
-      return;
-    }
-
-    const res = await loginUser(loginEmail, loginPassword);
-
-    if (res.status === "success") {
-      login(res.user); // ✅ SAVE USER CONTEXT
-      navigation.navigate("HomeScreen");
-    } else {
-      Alert.alert("Login Failed", res.message ?? "Invalid credentials");
+      Alert.alert("Signup Failed", res.message || "Could not create account");
     }
   };
 
@@ -266,7 +342,7 @@ const styles = StyleSheet.create({
 
   screen: {
     flex: 1,
-    backgroundColor: "#EEF2FF", // soft blue gradient substitute
+    backgroundColor: "#EEF2FF",
     justifyContent: "center",
     paddingHorizontal: 24,
   },
