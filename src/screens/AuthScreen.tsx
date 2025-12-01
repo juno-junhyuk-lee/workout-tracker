@@ -27,10 +27,11 @@ export default function AuthScreen({ navigation }: any) {
   const [age, setAge] = useState("");
   const [gender, setGender] = useState("");
 
-  // Email validation helper
+  // Email validation helper - stricter version
   const isValidEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
+    // More strict email validation
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return emailRegex.test(email) && email.length >= 5;
   };
 
   // Password validation helper
@@ -95,16 +96,32 @@ export default function AuthScreen({ navigation }: any) {
     // Trim whitespace
     const email = signupEmail.trim();
     const password = signupPassword.trim();
+    const fName = firstName.trim();
+    const lName = lastName.trim();
 
-    // Validate required fields
-    if (!firstName.trim() || !lastName.trim() || !email || !password) {
+    // Validate required fields are not empty
+    if (!fName || !lName || !email || !password) {
       Alert.alert("Error", "Please fill in all required fields.");
+      return;
+    }
+
+    // Validate first and last name length
+    if (fName.length < 2) {
+      Alert.alert("Invalid Name", "First name must be at least 2 characters.");
+      return;
+    }
+
+    if (lName.length < 2) {
+      Alert.alert("Invalid Name", "Last name must be at least 2 characters.");
       return;
     }
 
     // Validate email format
     if (!isValidEmail(email)) {
-      Alert.alert("Invalid Email", "Please enter a valid email address.");
+      Alert.alert(
+        "Invalid Email",
+        "Please enter a valid email address (e.g., user@example.com)."
+      );
       return;
     }
 
@@ -113,13 +130,15 @@ export default function AuthScreen({ navigation }: any) {
     if (!passwordCheck.valid) {
       Alert.alert(
         "Weak Password",
-        passwordCheck.message || "Password does not meet requirements"
+        passwordCheck.message ||
+          "Password must be at least 8 characters with uppercase, lowercase, and number."
       );
       return;
     }
 
     // Validate age if provided
-    if (age && (isNaN(Number(age)) || Number(age) < 13 || Number(age) > 120)) {
+    const ageNum = age ? Number(age) : null;
+    if (age && (isNaN(ageNum!) || ageNum! < 13 || ageNum! > 120)) {
       Alert.alert(
         "Invalid Age",
         "Please enter a valid age between 13 and 120."
@@ -128,12 +147,12 @@ export default function AuthScreen({ navigation }: any) {
     }
 
     const res = await registerUser({
-      first_name: firstName.trim(),
-      last_name: lastName.trim(),
+      first_name: fName,
+      last_name: lName,
       email: email,
       password: password,
-      age: age ? Number(age) : null,
-      gender: gender || null,
+      age: ageNum,
+      gender: gender.trim() || null,
     });
 
     if (res.status === "success") {
@@ -252,23 +271,25 @@ export default function AuthScreen({ navigation }: any) {
         {/* Signup */}
         {activeTab === "signup" && (
           <View style={styles.form}>
-            <Text style={styles.label}>First Name</Text>
+            <Text style={styles.label}>First Name *</Text>
             <TextInput
               style={styles.input}
               placeholder="John"
               value={firstName}
               onChangeText={setFirstName}
+              maxLength={50}
             />
 
-            <Text style={styles.label}>Last Name</Text>
+            <Text style={styles.label}>Last Name *</Text>
             <TextInput
               style={styles.input}
               placeholder="Doe"
               value={lastName}
               onChangeText={setLastName}
+              maxLength={50}
             />
 
-            <Text style={styles.label}>Email</Text>
+            <Text style={styles.label}>Email *</Text>
             <TextInput
               style={styles.input}
               placeholder="you@example.com"
@@ -276,9 +297,13 @@ export default function AuthScreen({ navigation }: any) {
               keyboardType="email-address"
               value={signupEmail}
               onChangeText={setSignupEmail}
+              maxLength={100}
             />
 
-            <Text style={styles.label}>Password</Text>
+            <Text style={styles.label}>Password *</Text>
+            <Text style={styles.passwordHint}>
+              Min 8 chars, uppercase, lowercase, number
+            </Text>
             <TextInput
               style={styles.input}
               placeholder="••••••••"
@@ -294,6 +319,7 @@ export default function AuthScreen({ navigation }: any) {
               keyboardType="numeric"
               value={age}
               onChangeText={setAge}
+              maxLength={3}
             />
 
             <Text style={styles.label}>Gender (optional)</Text>
@@ -302,6 +328,7 @@ export default function AuthScreen({ navigation }: any) {
               placeholder="Male / Female / Other"
               value={gender}
               onChangeText={setGender}
+              maxLength={20}
             />
 
             <TouchableOpacity
@@ -339,7 +366,6 @@ const styles = StyleSheet.create({
   skipButton: {
     marginBottom: 8,
   },
-
   screen: {
     flex: 1,
     backgroundColor: "#EEF2FF",
@@ -397,6 +423,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: 4,
     color: "#333",
+  },
+  passwordHint: {
+    fontSize: 12,
+    color: "#666",
+    marginBottom: 4,
+    fontStyle: "italic",
   },
   input: {
     borderWidth: 1,
