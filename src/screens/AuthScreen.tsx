@@ -14,12 +14,10 @@ import { useAuth } from "../context/AuthContext";
 export default function AuthScreen({ navigation }: any) {
   const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
 
-  // Login state
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const { login } = useAuth();
 
-  // Signup state
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [signupEmail, setSignupEmail] = useState("");
@@ -27,14 +25,11 @@ export default function AuthScreen({ navigation }: any) {
   const [age, setAge] = useState("");
   const [gender, setGender] = useState("");
 
-  // Email validation helper - stricter version
   const isValidEmail = (email: string): boolean => {
-    // More strict email validation
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     return emailRegex.test(email) && email.length >= 5;
   };
 
-  // Password validation helper
   const isValidPassword = (
     password: string
   ): { valid: boolean; message?: string } => {
@@ -86,7 +81,7 @@ export default function AuthScreen({ navigation }: any) {
 
     if (res.status === "success") {
       await login(res.user);
-      navigation.replace("MainTabs");
+      navigation.replace("HomeScreen");
     } else {
       Alert.alert("Login Failed", res.message || "Invalid credentials");
     }
