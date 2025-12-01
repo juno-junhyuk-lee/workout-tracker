@@ -18,6 +18,9 @@ expo-env.d.ts
 *.key
 *.mobileprovision
 
+# Local environment config
+src/services/config.js
+
 # Metro
 .metro-health-check*
 
@@ -39,3 +42,4 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+./

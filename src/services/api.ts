@@ -1,7 +1,7 @@
 import axios from "axios";
+import { API_URL } from './config'
 
-const BASE_URL =
-  "https://minerva-unweakening-meteorically.ngrok-free.dev/workout-tracker-api";
+const BASE_URL = API_URL;
 
 export interface RegisterPayload {
   first_name: string;

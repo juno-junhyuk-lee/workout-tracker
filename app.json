@@ -24,6 +24,18 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "95679781-3f21-4fa5-8b7d-39d49af81ce4"
+      }
+    },
+    "owner": "benavidesj23",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/95679781-3f21-4fa5-8b7d-39d49af81ce4"
     }
   }
 }
